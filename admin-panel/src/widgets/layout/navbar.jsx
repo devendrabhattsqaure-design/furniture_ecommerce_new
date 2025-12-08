@@ -43,7 +43,7 @@ export function Navbar({ brandName, routes, action }) {
   );
 
   return (
-    <MTNavbar className="p-3">
+    <MTNavbar id="pdffooter" className="p-3">
       <div className="container mx-auto flex items-center justify-between text-blue-gray-900">
         <Link to="/">
           <Typography

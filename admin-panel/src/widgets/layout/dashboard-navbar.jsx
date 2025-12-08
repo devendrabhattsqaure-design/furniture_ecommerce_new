@@ -89,7 +89,7 @@ export function DashboardNavbar() {
   };
 
   return (
-    <Navbar
+    <Navbar id="pdffooter"
       color={fixedNavbar ? "white" : "transparent"}
       className={`rounded-xl transition-all text-white-600 ${
         fixedNavbar

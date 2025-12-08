@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { CubeIcon, PlusIcon, PencilIcon, TrashIcon } from "@heroicons/react/24/solid";
-
+import { CubeIcon, PlusIcon,  } from "@heroicons/react/24/solid";
+import { Plus, Edit2, Trash2, } from "lucide-react";
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -416,21 +416,24 @@ const ProductManagement = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => handleEdit(product)}
-                      className="text-indigo-600 hover:text-indigo-900 mr-3 flex items-center"
-                    >
-                      <PencilIcon className="w-4 h-4 mr-1" />
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => handleDelete(product.product_id)}
-                      className="text-red-600 hover:text-red-900 flex items-center"
-                    >
-                      <TrashIcon className="w-4 h-4 mr-1" />
-                      Delete
-                    </button>
-                  </td>
+                                        <div className="flex items-center gap-3">
+                                          <button
+                                            onClick={() => handleEdit(product)}
+                                            className="text-blue-600 hover:text-blue-900 transition-colors p-2 rounded-lg hover:bg-blue-50"
+                                            title="Edit"
+                                          >
+                                            <Edit2 size={18} />
+                                          </button>
+                                          <button
+                                            onClick={() => handleDelete(product.product_id)}
+                                            className="text-red-600 hover:text-red-900 transition-colors p-2 rounded-lg hover:bg-red-50"
+                                            title="Delete"
+                                          >
+                                            <Trash2 size={18} />
+                                          </button>
+                                        </div>
+                                      </td>
+                  
                 </tr>
               ))}
             </tbody>
