@@ -1,3 +1,4 @@
+// admin-panel/src/widgets/layout/sidenav.jsx
 import PropTypes from "prop-types";
 import { Link, NavLink } from "react-router-dom";
 import { 
@@ -112,26 +113,49 @@ export function Sidenav({ brandImg, brandName, routes }) {
         title: "Billing",
         icon: <CreditCardIcon className="w-4 h-4" />,
         pages: []
+      },
+      expense: {
+        title: "Expense",
+        icon: <CreditCardIcon className="w-4 h-4" />,
+        pages: []
+      },
+      enquiry: {
+        title: "Enquiry",
+        icon: <CreditCardIcon className="w-4 h-4" />,
+        pages: []
+      },
+      quotation: {
+        title: "quotation",
+        icon: <CreditCardIcon className="w-4 h-4" />,
+        pages: []
       }
+
     };
 
     pages.forEach(page => {
       if (page.name === "dashboard") {
         categories.dashboard.pages.push(page);
-      } else if (["user management", "product management", "category", "slider"].includes(page.name)) {
+      } else if (["employee management", "product management", "category management","attendance management" ].includes(page.name)) {
         categories.management.pages.push(page);
-      } else if (["blog"].includes(page.name)) {
+      } else if (["slider","blog"].includes(page.name)) {
         categories.content.pages.push(page);
       } else if (["order management"].includes(page.name)) {
         categories.sales.pages.push(page);
-      } else if (["business report", "tables"].includes(page.name)) {
+      } else if (["business report", "tables",'stocks'].includes(page.name)) {
         categories.reports.pages.push(page);
       } else if (["organization management", "profile", "notifications"].includes(page.name)) {
         categories.settings.pages.push(page);
-      } else if (["attendance"].includes(page.name)) {
-        categories.attendance.pages.push(page);
+      
       } else if (["billing management"].includes(page.name)) {
         categories.billing.pages.push(page);
+      }else if (["expense"].includes(page.name)) {
+        categories.expense.pages.push(page);
+      }
+      else if (["enquiry"].includes(page.name)) {
+        categories.enquiry.pages.push(page);
+      }
+      else if (["quotation"].includes(page.name)) {
+        categories.quotation.pages.push(page);
       }
     });
 
@@ -254,8 +278,8 @@ export function Sidenav({ brandImg, brandName, routes }) {
                             if (page.requiredRole === 'super_admin') {
                               return userRole === 'super_admin';
                             }
-                            if (page.requiredRole === 'admin') {
-                              return userRole === 'admin' || userRole === 'super_admin';
+                            if (page.requiredRole === 'admin'||page.requiredRole === 'manager') {
+                              return userRole === 'admin' || userRole === 'super_admin'|| userRole === 'manager';
                             }
                           }
                           return true;

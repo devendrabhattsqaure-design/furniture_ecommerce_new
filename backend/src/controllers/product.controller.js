@@ -88,6 +88,7 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
     LEFT JOIN categories c ON p.category_id = c.category_id 
     WHERE p.org_id = ? AND c.org_id = ?
   `;
+
   const params = [orgId, orgId];
 
   if (category_id) {
@@ -222,10 +223,12 @@ exports.updateProduct = asyncHandler(async (req, res) => {
     };
   }
 
-  const {
+   const {
     product_name, slug, sku, category_id, brand, description,
     short_description, price, compare_price, cost_price, material,
     color, dimensions, weight, stock_quantity, low_stock_threshold,
+    warranty_period, warranty_type, guarantee_period,
+    warranty_details, guarantee_details,
     is_featured, is_bestseller, is_new_arrival, is_on_sale, is_active
   } = updateData;
 
@@ -242,12 +245,15 @@ exports.updateProduct = asyncHandler(async (req, res) => {
     }
   }
 
-  await db.query(
+    await db.query(
     `UPDATE products SET 
       product_name = ?, slug = ?, sku = ?, category_id = ?, brand = ?, 
       description = ?, short_description = ?, price = ?, compare_price = ?, 
       cost_price = ?, material = ?, color = ?, dimensions = ?, weight = ?, 
-      stock_quantity = ?, low_stock_threshold = ?, is_featured = ?, 
+      stock_quantity = ?, low_stock_threshold = ?,
+      warranty_period = ?, warranty_type = ?, guarantee_period = ?,
+      warranty_details = ?, guarantee_details = ?,
+      is_featured = ?, 
       is_bestseller = ?, is_new_arrival = ?, is_on_sale = ?, is_active = ?,
       updated_at = NOW()
     WHERE product_id = ?`,
@@ -255,6 +261,11 @@ exports.updateProduct = asyncHandler(async (req, res) => {
       product_name, slug, sku, category_id, brand, description,
       short_description, price, compare_price, cost_price, material,
       color, dimensions, weight, stock_quantity, low_stock_threshold,
+      warranty_period || null,
+      warranty_type || null,
+      guarantee_period || null,
+      warranty_details || null,
+      guarantee_details || null,
       is_featured,
       is_bestseller,
       is_new_arrival,
@@ -334,6 +345,8 @@ exports.createProduct = asyncHandler(async (req, res) => {
     product_name, slug, sku, category_id, brand, description,
     short_description, price, compare_price, cost_price, material,
     color, dimensions, weight, stock_quantity, low_stock_threshold,
+    warranty_period, warranty_type, guarantee_period, 
+    warranty_details, guarantee_details,
     is_featured, is_bestseller, is_new_arrival, is_on_sale
   } = productData;
 
@@ -365,12 +378,19 @@ exports.createProduct = asyncHandler(async (req, res) => {
       product_name, slug, sku, category_id, brand, description, 
       short_description, price, compare_price, cost_price, material, 
       color, dimensions, weight, stock_quantity, low_stock_threshold,
+      warranty_period, warranty_type, guarantee_period,
+      warranty_details, guarantee_details,
       is_featured, is_bestseller, is_new_arrival, is_on_sale, org_id
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       product_name, slug, sku, category_id, brand, description, 
       short_description, price, compare_price, cost_price, material, 
       color, dimensions, weight, stock_quantity, low_stock_threshold,
+      warranty_period || null,
+      warranty_type || null,
+      guarantee_period || null,
+      warranty_details || null,
+      guarantee_details || null,
       is_featured === 'true' || is_featured === true,
       is_bestseller === 'true' || is_bestseller === true,
       is_new_arrival === 'true' || is_new_arrival === true,

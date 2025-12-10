@@ -36,6 +36,11 @@ import CategoryManagement from "@/pages/dashboard/CategoryManagement";
 import BusinessReport from "@/pages/dashboard/BusinessReport";
 import OrderManagement from "@/pages/dashboard/OrderManagement";
 import UserDetailsPage from "./pages/dashboard/UserDetailsPage";
+import EnquiryManagement from "./pages/dashboard/EnquiryManagement";
+import ExpenseManagement from "./pages/dashboard/ExpenseManagement";
+import StockManagement from "./pages/dashboard/StockManagement";
+import QuotationManagement from "./pages/dashboard/QuotationManagement";
+
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -75,7 +80,7 @@ const hasAccess = (requiredRole) => {
     return userRole === 'super_admin';
   }
   if (requiredRole === 'admin') {
-    return userRole === 'admin' || userRole === 'super_admin';
+    return userRole === 'admin' || userRole === 'super_admin'||userRole==='manager';
   }
   return true; // For other roles or no specific requirement
 };
@@ -122,10 +127,10 @@ const adminPages = [
   },
   {
     icon: <UsersIcon {...icon} />,
-    name: "user management",
-    path: "/user-management",
+    name: "employee management",
+    path: "/employee-management",
     element: <UserManagement />,
-    requiredRole: 'admin',
+    requiredRole: 'admin'||'manager',
   },
   {
     icon: <DocumentTextIcon {...icon} />,
@@ -141,8 +146,8 @@ const adminPages = [
   },
   {
     icon: <TagIcon {...icon} />,
-    name: "category",
-    path: "/category",
+    name: "category management",
+    path: "/category-management",
     element: <CategoryManagement />,
   },
   {
@@ -162,29 +167,55 @@ const adminPages = [
     name: "order management",
     path: "/order-management",
     element: <OrderManagement />,
-    requiredRole: 'admin',
+    requiredRole: 'admin'||'manager',
   },
   {
     icon: <CalendarDaysIcon {...icon} />,
-    name: "attendance",
-    path: "/attendance",
+    name: "attendance management",
+    path: "/attendance-management",
     element: <AttendanceManagement />,
-    requiredRole: 'admin',
+    requiredRole: 'admin'||'manager',
   },
   {
     icon: <CreditCardIcon {...icon} />,
     name: "billing management",
     path: "/billing-management",
     element: <BillingManagement />,
-    requiredRole: 'admin',
+    requiredRole: 'admin'||'manager',
   },
   {
     icon: <CreditCardIcon {...icon} />,
     name: "business report",
     path: "/business-report",
     element: <BusinessReport />,
-    requiredRole: 'admin',
+    requiredRole: 'admin'||'manager',
   },
+   {
+    icon: <InformationCircleIcon {...icon} />,
+    name: "quotation",
+    path: "/quotation",
+    element: <QuotationManagement />,
+  },
+  {
+    icon: <InformationCircleIcon {...icon} />,
+    name: "stocks",
+    path: "/stocks",
+    element: <StockManagement />,
+  },
+  {
+    icon: <InformationCircleIcon {...icon} />,
+    name: "enquiry",
+    path: "/enquiry",
+    element: <EnquiryManagement />,
+  },
+   {
+    icon: <InformationCircleIcon {...icon} />,
+    name: "expense",
+    path: "/expense",
+    element: <ExpenseManagement />,
+  },
+
+  
   
 ];
 
@@ -224,7 +255,7 @@ const getDashboardPages = () => {
   if (userRole === 'super_admin') {
     // Super admin gets ONLY: profile, organization management, and notifications
     pages = [...superAdminPages];
-  } else if (userRole === 'admin') {
+  } else if (userRole === 'admin'||userRole === 'manager') {
     // Admin gets all admin pages (except super admin pages)
     pages = [...adminPages];
   } else {

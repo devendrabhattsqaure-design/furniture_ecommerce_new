@@ -6,8 +6,10 @@ const { deleteImage, extractPublicId } = require('../config/cloudinary');
 // @route   GET /api/blog
 // @access  Public
 exports.getAllPosts = asyncHandler(async (req, res) => {
+  let {orgId} = req.params
   const [posts] = await db.query(`
     SELECT * FROM blog_posts 
+    WHERE org_id=${orgId}
     ORDER BY created_at DESC
   `);
   
@@ -22,6 +24,7 @@ exports.getAllPosts = asyncHandler(async (req, res) => {
 // @route   GET /api/blog/:id
 // @access  Public
 exports.getPostById = asyncHandler(async (req, res) => {
+
   const { id } = req.params;
   
   const [posts] = await db.query(`
@@ -46,6 +49,7 @@ exports.getPostById = asyncHandler(async (req, res) => {
 // @route   POST /api/blog
 // @access  Private
 exports.createPost = asyncHandler(async (req, res) => {
+
   const {
     title,
     slug,
@@ -55,7 +59,8 @@ exports.createPost = asyncHandler(async (req, res) => {
     tags,
     is_published = false,
     meta_title,
-    meta_description
+    meta_description,
+    org_id
   } = req.body;
 
   // Get uploaded image URL from Cloudinary
@@ -86,8 +91,8 @@ exports.createPost = asyncHandler(async (req, res) => {
   const [result] = await db.query(
     `INSERT INTO blog_posts (
       title, slug, content, excerpt, featured_image,
-      category, tags, is_published, meta_title, meta_description
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      category, tags, is_published, meta_title, meta_description,org_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`,
     [
       title,
       slug,
@@ -98,7 +103,8 @@ exports.createPost = asyncHandler(async (req, res) => {
       tags ? JSON.stringify(tags) : null,
       is_published,
       meta_title || null,
-      meta_description || null
+      meta_description || null,
+      org_id
     ]
   );
 

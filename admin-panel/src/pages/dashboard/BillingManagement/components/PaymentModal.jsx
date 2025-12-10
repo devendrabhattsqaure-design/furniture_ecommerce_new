@@ -1,9 +1,11 @@
 import React, { useState } from "react";
-import { X, DollarSign, Loader2 } from "lucide-react";
+import { X, DollarSign, Loader2, CreditCard, Calendar } from "lucide-react";
 import { toast } from 'react-toastify';
 
 const PaymentModal = ({ bill, onClose, onSuccess }) => {
   const [paymentAmount, setPaymentAmount] = useState(bill.due_amount || '');
+  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(false);
 
   const API_BASE_URL = "http://localhost:5000/api";
@@ -17,59 +19,106 @@ const PaymentModal = ({ bill, onClose, onSuccess }) => {
     }
   };
 
-  const handlePaymentUpdate = async () => {
-    if (!bill) return;
-    
-    const payment = parseFloat(paymentAmount);
-    if (!payment || isNaN(payment) || payment <= 0) {
-      toast.error('Please enter a valid payment amount');
-      return;
-    }
-
-    const currentPaid = parseFloat(bill.paid_amount || 0);
-    const currentDue = parseFloat(bill.due_amount || 0);
-    const totalAmount = parseFloat(bill.total_amount || 0);
-    
-    const newPaidAmount = Math.min(currentPaid + payment, totalAmount);
-    const newDueAmount = Math.max(0, totalAmount - newPaidAmount);
-    
-    if (payment > currentDue) {
-      toast.error(`Maximum payment amount is ₹${currentDue.toLocaleString('en-IN')}`);
-      return;
-    }
-
+  const getUserId = () => {
     try {
-      setLoading(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/bills/${bill.bill_id}/payment`, {
-        method: 'PUT',
+      const user = JSON.parse(localStorage.getItem("user"));
+      return user?.user_id || null;
+    } catch (e) {
+      return null;
+    }
+  };
+
+ const handlePaymentUpdate = async () => {
+  if (!bill) return;
+  
+  const payment = parseFloat(paymentAmount);
+  if (!payment || isNaN(payment) || payment <= 0) {
+    toast.error('Please enter a valid payment amount');
+    return;
+  }
+
+  const currentDue = parseFloat(bill.due_amount || 0);
+  
+  if (payment > currentDue) {
+    toast.error(`Maximum payment amount is ₹${currentDue.toLocaleString('en-IN')}`);
+    return;
+  }
+
+  const newDueAmount = currentDue - payment;
+  const newPaidAmount = parseFloat(bill.paid_amount || 0) + payment;
+
+  try {
+    setLoading(true);
+    const token = localStorage.getItem('token');
+    const orgId = getOrgId();
+    
+    if (!orgId) {
+      toast.error('Organization not found. Please login again.');
+      return;
+    }
+
+    // First, update the bill directly
+    const billResponse = await fetch(`${API_BASE_URL}/bills/${bill.bill_id}/payment`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'x-org-id': orgId
+      },
+      body: JSON.stringify({ 
+        paid_amount: newPaidAmount,
+        payment_amount: payment
+      })
+    });
+
+    const billData = await billResponse.json();
+
+    if (!billResponse.ok) {
+      throw new Error(billData.message || 'Failed to update payment');
+    }
+
+    // Then, try to record the payment entry
+    try {
+      const paymentResponse = await fetch(`${API_BASE_URL}/payments`, {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
-          'x-org-id': getOrgId()
+          'x-org-id': orgId
         },
-        body: JSON.stringify({ 
-          paid_amount: newPaidAmount,
-          payment_amount: payment
+        body: JSON.stringify({
+          bill_id: bill.bill_id,
+          bill_number: bill.bill_number,
+          customer_name: bill.customer_name,
+          customer_phone: bill.customer_phone,
+          payment_amount: payment,
+          previous_due: currentDue,
+          new_due: newDueAmount,
+          payment_method: paymentMethod,
+          notes: notes,
+          created_by: getUserId()
         })
       });
 
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success(`Payment of ₹${payment.toLocaleString('en-IN')} recorded successfully!`);
-        onSuccess();
-        onClose();
-      } else {
-        toast.error(data.message || 'Failed to update payment');
+      if (!paymentResponse.ok) {
+        console.warn('Payment record creation failed, but bill was updated');
+        // Continue anyway since bill was updated successfully
       }
-    } catch (error) {
-      console.error('Error updating payment:', error);
-      toast.error('Network error. Please try again.');
-    } finally {
-      setLoading(false);
+    } catch (paymentError) {
+      console.warn('Failed to create payment record:', paymentError);
+      // Continue anyway since bill was updated successfully
     }
-  };
+
+    toast.success(`Payment of ₹${payment.toLocaleString('en-IN')} recorded successfully!`);
+    onSuccess();
+    onClose();
+  } catch (error) {
+    console.error('Error updating payment:', error);
+    toast.error(error.message || 'Network error. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -77,7 +126,7 @@ const PaymentModal = ({ bill, onClose, onSuccess }) => {
         <div className="p-4 border-b border-gray-200 flex justify-between items-center">
           <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
             <DollarSign className="w-5 h-5" />
-            Update Payment
+            Record Payment
           </h3>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <X className="w-5 h-5" />
@@ -101,26 +150,60 @@ const PaymentModal = ({ bill, onClose, onSuccess }) => {
             </div>
           </div>
           
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Payment Amount (₹)
-            </label>
-            <input
-              type="number"
-              value={paymentAmount}
-              onChange={(e) => setPaymentAmount(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-lg"
-              placeholder="Enter payment amount"
-              max={bill.due_amount}
-              step="0.01"
-              min="0.01"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Maximum: ₹{parseFloat(bill.due_amount).toLocaleString('en-IN')}
-            </p>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Payment Amount (₹)
+              </label>
+              <input
+                type="number"
+                value={paymentAmount}
+                onChange={(e) => setPaymentAmount(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent text-lg"
+                placeholder="Enter payment amount"
+                max={bill.due_amount}
+                step="0.01"
+                min="0.01"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Maximum: ₹{parseFloat(bill.due_amount).toLocaleString('en-IN')}
+              </p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Payment Method
+              </label>
+              <select
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              >
+                <option value="cash">Cash</option>
+                <option value="bank_transfer">Bank Transfer</option>
+                <option value="cheque">Cheque</option>
+                <option value="upi">UPI</option>
+                <option value="credit_card">Credit Card</option>
+                <option value="debit_card">Debit Card</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Notes (Optional)
+              </label>
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                rows="2"
+                placeholder="Add any notes about this payment..."
+              />
+            </div>
           </div>
           
-          <div className="flex justify-end gap-3">
+          <div className="flex justify-end gap-3 mt-6">
             <button
               type="button"
               onClick={onClose}
@@ -142,7 +225,7 @@ const PaymentModal = ({ bill, onClose, onSuccess }) => {
               ) : (
                 <>
                   <DollarSign className="w-4 h-4" />
-                  Update Payment
+                  Record Payment
                 </>
               )}
             </button>

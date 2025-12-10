@@ -498,6 +498,12 @@ const BillView = () => {
               <span>+₹${parseFloat(bill.shipment_charges || 0).toFixed(2)}</span>
             </div>
           ` : ''}
+          ${bill.installation_charges > 0 ? `
+            <div class="total-row">
+              <span>INSTALLATION CHARGES:</span>
+              <span>+₹${parseFloat(bill.installation_charges || 0).toFixed(2)}</span>
+            </div>
+          ` : ''}
           
           <div class="grand-total">
             <span>TOTAL AMOUNT:</span>
@@ -959,6 +965,12 @@ const BillView = () => {
                     <div className="flex justify-between">
                       <span>SHIPMENT CHARGES</span>
                       <span>₹{parseFloat(bill.shipment_charges).toFixed(2)}</span>
+                    </div>
+                  )}
+                  {bill.installation_charges > 0 && (
+                    <div className="flex justify-between">
+                      <span>INSTALLATION CHARGES</span>
+                      <span>₹{parseFloat(bill.installation_charges).toFixed(2)}</span>
                     </div>
                   )}
                   

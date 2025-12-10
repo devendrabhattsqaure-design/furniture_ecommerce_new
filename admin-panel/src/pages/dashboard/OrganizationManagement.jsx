@@ -296,17 +296,14 @@ const OrganizationManagement = () => {
       toast.error("Phone number is required");
       return false;
     }
-    if (!newUserForm.base_salary || parseFloat(newUserForm.base_salary) < 0) {
-      toast.error("Please enter a valid base salary");
-      return false;
-    }
+   
     return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    if (!validateForm()) return;
+    
 
     setLoading(true);
 
@@ -945,7 +942,7 @@ const OrganizationManagement = () => {
       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
       placeholder="Enter base salary"
       min="0"
-      step="0.01"
+      
       required={newUserForm.role !== 'admin'}
     />
   </div>

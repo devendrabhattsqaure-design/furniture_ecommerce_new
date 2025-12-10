@@ -5,7 +5,9 @@ const {
   exportBusinessReport,
   getOverdueBills,
   getSalesTrend,
-  getTopCustomers
+  getTopCustomers,
+  getPayments,
+  recordPayment
 } = require('../controllers/businessreport.controller');
 const { protect, authorize } = require('../middlewares/auth.middleware');
 
@@ -27,5 +29,7 @@ router.get('/sales-trend', getSalesTrend);
 
 // Top customers
 router.get('/top-customers', getTopCustomers);
+router.post('/payments', protect, authorize('super_admin', 'admin', 'staff'), recordPayment);
+router.get('/payments', protect, authorize('super_admin', 'admin', 'staff'), getPayments);
 
 module.exports = router;

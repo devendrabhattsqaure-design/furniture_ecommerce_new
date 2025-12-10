@@ -10,7 +10,7 @@ import {
   X, 
   Download,
   RefreshCw,
-  MoreVertical,
+
   Truck,
   CheckCircle,
   Clock,
@@ -60,6 +60,10 @@ const fetchOrders = async () => {
     setFetchingOrders(true);
     const token = localStorage.getItem('token');
     
+    // Get user info from localStorage if available
+    const userData = JSON.parse(localStorage.getItem('user') || '{}');
+    console.log('User data:', userData); // Debug log
+    
     // Build query parameters
     const params = new URLSearchParams();
     if (statusFilter !== 'all') {
@@ -85,20 +89,25 @@ const fetchOrders = async () => {
     if (response.ok) {
       const data = await response.json();
       console.log('Full response data:', data); // Debug log
-      console.log('Orders data:', data.orders); // Debug log
+      console.log('Organization:', data.organization); // Debug log
       
-      // Fixed: Use data.orders and provide empty array as fallback
+      // Set orders
       setOrders(data.orders || []);
+      
+      // If you want to show organization info in UI
+      if (data.organization) {
+        console.log('Current organization:', data.organization.name);
+      }
     } else {
       const errorData = await response.json();
       console.error('Error response:', errorData);
       toast.error(errorData.message || "Failed to fetch orders");
-      setOrders([]); // Set empty array on error
+      setOrders([]);
     }
   } catch (error) {
     console.error('Error fetching orders:', error);
     toast.error("Error loading orders");
-    setOrders([]); // Set empty array on error
+    setOrders([]);
   } finally {
     setFetchingOrders(false);
   }

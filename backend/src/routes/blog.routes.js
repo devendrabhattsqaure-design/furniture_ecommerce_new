@@ -12,7 +12,7 @@ const {
 const { uploadBlog } = require('../config/cloudinary');
 
 // Public routes
-router.get('/', getAllPosts);
+router.get('/:orgId', getAllPosts);
 router.get('/:id', getPostById);
 
 // Protected routes with image upload

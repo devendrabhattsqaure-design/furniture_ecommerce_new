@@ -38,7 +38,7 @@ const BillCreate = () => {
     items: [],
     gst_type: 'with_gst',
     gst_percentage: '',
-
+installation_charges: '', 
     discount_amount: '',
     discount_percentage: '',
     tax_amount: '',
@@ -203,136 +203,139 @@ const BillCreate = () => {
     setFormData(prev => ({ ...prev, items: updatedItems }));
   };
 
-  const calculateTotals = () => {
-    const itemsWithTotals = formData.items.map(item => ({
-      ...item,
-      total: parseFloat(item.price || 0) * parseInt(item.quantity || 0)
-    }));
+ const calculateTotals = () => {
+  const itemsWithTotals = formData.items.map(item => ({
+    ...item,
+    total: parseFloat(item.price || 0) * parseInt(item.quantity || 0)
+  }));
 
-    const subtotal = itemsWithTotals.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
-    
-    // Calculate discount
-    let discount = 0;
-    if (formData.discount_amount && !isNaN(parseFloat(formData.discount_amount))) {
-      discount = parseFloat(formData.discount_amount);
-    } else if (formData.discount_percentage && !isNaN(parseFloat(formData.discount_percentage))) {
-      discount = (subtotal * parseFloat(formData.discount_percentage)) / 100;
+  const subtotal = itemsWithTotals.reduce((sum, item) => sum + (parseFloat(item.total) || 0), 0);
+  
+  // Calculate discount
+  let discount = 0;
+  if (formData.discount_amount && !isNaN(parseFloat(formData.discount_amount))) {
+    discount = parseFloat(formData.discount_amount);
+  } else if (formData.discount_percentage && !isNaN(parseFloat(formData.discount_percentage))) {
+    discount = (subtotal * parseFloat(formData.discount_percentage)) / 100;
+  }
+
+  // Calculate tax based on GST type
+  let tax = 0;
+  if (formData.gst_type === 'with_gst') {
+    if (formData.tax_amount && !isNaN(parseFloat(formData.tax_amount))) {
+      tax = parseFloat(formData.tax_amount);
+    } else if (formData.tax_percentage && !isNaN(parseFloat(formData.tax_percentage))) {
+      tax = ((subtotal - discount) * parseFloat(formData.tax_percentage)) / 100;
+    } else if (organization && organization.gst_percentage) {
+      tax = ((subtotal - discount) * parseFloat(organization.gst_percentage)) / 100;
     }
+  }
 
-    // Calculate tax based on GST type
-    let tax = 0;
-    if (formData.gst_type === 'with_gst') {
-      if (formData.tax_amount && !isNaN(parseFloat(formData.tax_amount))) {
-        tax = parseFloat(formData.tax_amount);
-      } else if (formData.tax_percentage && !isNaN(parseFloat(formData.tax_percentage))) {
-        tax = ((subtotal - discount) * parseFloat(formData.tax_percentage)) / 100;
-      } else if (organization && organization.gst_percentage) {
-        tax = ((subtotal - discount) * parseFloat(organization.gst_percentage)) / 100;
-      }
-    }
+  // Calculate shipment charges
+  const shipment = parseFloat(formData.shipment_charges) || 0;
+  
+  // Calculate installation charges - ADD THIS
+  const installation = parseFloat(formData.installation_charges) || 0;
 
-    // Calculate shipment charges
-    const shipment = parseFloat(formData.shipment_charges) || 0;
+  // Calculate total - UPDATE THIS LINE to include installation
+  const total = parseFloat((subtotal - discount + tax + shipment + installation).toFixed(2));
+  
+  // Calculate payment status
+  const paidAmount = parseFloat(formData.paid_amount) || 0;
+  const dueAmount = Math.max(0, parseFloat((total - paidAmount).toFixed(2)));
+  
+  let paymentStatus = 'pending';
+  if (paidAmount >= total) {
+    paymentStatus = 'paid';
+  } else if (paidAmount > 0) {
+    paymentStatus = 'partial';
+  }
 
-    // Calculate total
-    const total = parseFloat((subtotal - discount + tax + shipment).toFixed(2));
+  return { 
+    subtotal: parseFloat(subtotal.toFixed(2)), 
+    discount: parseFloat(discount.toFixed(2)), 
+    tax: parseFloat(tax.toFixed(2)), 
+    shipment: parseFloat(shipment.toFixed(2)),
+    installation: parseFloat(installation.toFixed(2)),  // Add this
+    total,
+    paidAmount: parseFloat(paidAmount.toFixed(2)),
+    dueAmount: parseFloat(dueAmount.toFixed(2)),
+    paymentStatus
+  };
+};
+
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  
+  if (!formData.customer_name) {
+    toast.error("Customer name is required");
+    return;
+  }
+
+  if (formData.items.length === 0) {
+    toast.error("Please add at least one product to the bill");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const totals = calculateTotals();
+    const token = localStorage.getItem('token');
     
-    // Calculate payment status
-    const paidAmount = parseFloat(formData.paid_amount) || 0;
-    const dueAmount = Math.max(0, parseFloat((total - paidAmount).toFixed(2)));
-    
-    let paymentStatus = 'pending';
-    if (paidAmount >= total) {
-      paymentStatus = 'paid';
-    } else if (paidAmount > 0) {
-      paymentStatus = 'partial';
-    }
-
-    return { 
-      subtotal: parseFloat(subtotal.toFixed(2)), 
-      discount: parseFloat(discount.toFixed(2)), 
-      tax: parseFloat(tax.toFixed(2)), 
-      shipment: parseFloat(shipment.toFixed(2)),
-      total,
-      paidAmount: parseFloat(paidAmount.toFixed(2)),
-      dueAmount: parseFloat(dueAmount.toFixed(2)),
-      paymentStatus
+    // Prepare bill data - ADD installation_charges
+    const billData = {
+      customer_name: formData.customer_name,
+      customer_phone: formData.customer_phone || '',
+      customer_email: formData.customer_email || '',
+      customer_address: formData.customer_address || '',
+      items: formData.items.map(item => ({
+        product_id: item.product_id,
+        quantity: parseInt(item.quantity)
+      })),
+      gst_type: formData.gst_type,
+      discount_amount: totals.discount > 0 ? totals.discount.toString() : '',
+      discount_percentage: formData.discount_percentage || '',
+      tax_amount: totals.tax > 0 ? totals.tax.toString() : '',
+      tax_percentage: formData.tax_percentage || '',
+      shipment_charges: formData.shipment_charges || '0',
+      installation_charges: formData.installation_charges || '0',  // Add this
+      payment_method: formData.payment_method,
+      transaction_id: formData.transaction_id || '',
+      cheque_number: formData.cheque_number || '',
+      bank_name: formData.bank_name || '',
+      notes: formData.notes || '',
+      paid_amount: formData.paid_amount || '0',
+      due_date: formData.due_date || null
     };
-  };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!formData.customer_name) {
-      toast.error("Customer name is required");
-      return;
+    const response = await fetch(`${API_BASE_URL}/bills`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'x-org-id': getOrgId()
+      },
+      body: JSON.stringify(billData)
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+      toast.success("Bill created successfully!");
+      navigate('/dashboard/billing-management');
+    } else {
+      console.error('Error response:', data);
+      toast.error(data.message || "Failed to create bill");
     }
-
-    if (formData.items.length === 0) {
-      toast.error("Please add at least one product to the bill");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      const totals = calculateTotals();
-      const token = localStorage.getItem('token');
-      
-      // Prepare bill data
-      const billData = {
-        customer_name: formData.customer_name,
-        customer_phone: formData.customer_phone || '',
-        customer_email: formData.customer_email || '',
-        customer_address: formData.customer_address || '',
-        items: formData.items.map(item => ({
-          product_id: item.product_id,
-          quantity: parseInt(item.quantity)
-        })),
-        gst_type: formData.gst_type,
-        discount_amount: totals.discount > 0 ? totals.discount.toString() : '',
-        discount_percentage: formData.discount_percentage || '',
-        tax_amount: totals.tax > 0 ? totals.tax.toString() : '',
-        tax_percentage: formData.tax_percentage || '',
-        shipment_charges: formData.shipment_charges || '0',
-        payment_method: formData.payment_method,
-        transaction_id: formData.transaction_id || '',
-        cheque_number: formData.cheque_number || '',
-        bank_name: formData.bank_name || '',
-        notes: formData.notes || '',
-        paid_amount: formData.paid_amount || '0',
-        due_date: formData.due_date || null
-      };
-
-      const response = await fetch(`${API_BASE_URL}/bills`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'x-org-id': getOrgId()
-        },
-        body: JSON.stringify(billData)
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        toast.success("Bill created successfully!");
-        navigate('/dashboard/billing-management');
-      } else {
-        console.error('Error response:', data);
-        toast.error(data.message || "Failed to create bill");
-      }
-    } catch (error) {
-      console.error('Error creating bill:', error);
-      toast.error("Network error. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const { subtotal, discount, tax, shipment, total, paidAmount, dueAmount, paymentStatus } = calculateTotals();
-
+  } catch (error) {
+    console.error('Error creating bill:', error);
+    toast.error("Network error. Please try again.");
+  } finally {
+    setLoading(false);
+  }
+};
+const { subtotal, discount, tax, shipment, installation, total, paidAmount, dueAmount, paymentStatus } = calculateTotals();
   // Clear payment details when payment method changes
   const handlePaymentMethodChange = (method) => {
     setFormData(prev => ({
@@ -711,6 +714,35 @@ const BillCreate = () => {
                       <span className="font-medium">+₹{shipment.toLocaleString('en-IN')}</span>
                     </div>
                   )}
+
+                  {/* Installation Charges */}
+<div>
+  <label className="block text-xs font-medium text-gray-700 mb-1 flex items-center gap-1">
+    <span className="p-1 bg-blue-50 rounded">
+      <Truck className="w-4 h-4 text-blue-600" />
+    </span>
+    Installation Charges (₹)
+  </label>
+  <input
+    type="number"
+    value={formData.installation_charges}
+    onChange={(e) => setFormData(prev => ({ 
+      ...prev, 
+      installation_charges: e.target.value
+    }))}
+    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+    placeholder="0.00"
+    min="0"
+    step="0.01"
+  />
+</div>
+
+{installation > 0 && (
+  <div className="flex justify-between items-center">
+    <span>Installation Charges</span>
+    <span className="font-medium">+₹{installation.toLocaleString('en-IN')}</span>
+  </div>
+)}
 
                   {/* Tax - Only show if GST is enabled */}
                   {formData.gst_type === 'with_gst' && (

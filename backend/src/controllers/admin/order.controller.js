@@ -2,11 +2,12 @@
 const db = require('../../config/database');
 const asyncHandler = require('express-async-handler');
 
-// @desc    Get all orders (Admin)
+// @desc    Get all orders (Admin) - Filtered by org_id
 // @route   GET /api/admin/orders
 exports.getAllOrders = asyncHandler(async (req, res) => {
   const { page = 1, limit = 20, status, search } = req.query;
   const offset = (page - 1) * limit;
+  const orgId = req.user.org_id; // Get org_id from authenticated user
 
   let query = `
     SELECT 
@@ -16,13 +17,15 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
       u.phone as customer_phone,
       ua.address_line1,
       ua.city,
-      ua.postal_code
+      ua.postal_code,
+      org.org_name as organization_name
     FROM orders o
     LEFT JOIN users u ON o.user_id = u.user_id
     LEFT JOIN user_addresses ua ON o.shipping_address_id = ua.address_id
-    WHERE 1=1
+    LEFT JOIN organizations org ON o.org_id = org.org_id
+    WHERE o.org_id = ?  -- Filter by organization ID
   `;
-  const params = [];
+  const params = [orgId];
 
   if (status && status !== 'all') {
     query += ' AND o.order_status = ?';
@@ -55,14 +58,14 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
     order.items = items;
   }
 
-  // Get total count
+  // Get total count with org filter
   let countQuery = `
     SELECT COUNT(*) as total 
     FROM orders o
     LEFT JOIN users u ON o.user_id = u.user_id
-    WHERE 1=1
+    WHERE o.org_id = ?
   `;
-  const countParams = [];
+  const countParams = [orgId];
   
   if (status && status !== 'all') {
     countQuery += ' AND o.order_status = ?';
@@ -78,7 +81,11 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
 
   res.json({
     success: true,
-    orders: orders, // This is the key - sending as "orders"
+    orders: orders,
+    organization: {
+      id: orgId,
+      name: orders.length > 0 ? orders[0].organization_name : 'N/A'
+    },
     pagination: {
       page: parseInt(page),
       limit: parseInt(limit),
@@ -88,18 +95,23 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Update order status
+// @desc    Update order status (with org validation)
 // @route   PUT /api/admin/orders/:orderId/status
 exports.updateOrderStatus = asyncHandler(async (req, res) => {
   const { orderId } = req.params;
   const { status, notes } = req.body;
+  const orgId = req.user.org_id; // Get org_id from authenticated user
 
-  // Check if order exists
-  const [orders] = await db.query('SELECT * FROM orders WHERE order_id = ?', [orderId]);
+  // Check if order exists and belongs to user's organization
+  const [orders] = await db.query(
+    'SELECT * FROM orders WHERE order_id = ? AND org_id = ?', 
+    [orderId, orgId]
+  );
+  
   if (orders.length === 0) {
     return res.status(404).json({
       success: false,
-      message: 'Order not found'
+      message: 'Order not found or you do not have permission'
     });
   }
 
@@ -122,10 +134,11 @@ exports.updateOrderStatus = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Get single order details
+// @desc    Get single order details (with org validation)
 // @route   GET /api/admin/orders/:orderId
 exports.getOrderById = asyncHandler(async (req, res) => {
   const { orderId } = req.params;
+  const orgId = req.user.org_id; // Get org_id from authenticated user
 
   const [orders] = await db.query(`
     SELECT 
@@ -139,17 +152,19 @@ exports.getOrderById = asyncHandler(async (req, res) => {
       ua.city,
       ua.state,
       ua.postal_code,
-      ua.phone as shipping_phone
+      ua.phone as shipping_phone,
+      org.org_name as organization_name
     FROM orders o
     LEFT JOIN users u ON o.user_id = u.user_id
     LEFT JOIN user_addresses ua ON o.shipping_address_id = ua.address_id
-    WHERE o.order_id = ?
-  `, [orderId]);
+    LEFT JOIN organizations org ON o.org_id = org.org_id
+    WHERE o.order_id = ? AND o.org_id = ?
+  `, [orderId, orgId]);
 
   if (orders.length === 0) {
     return res.status(404).json({
       success: false,
-      message: 'Order not found'
+      message: 'Order not found or you do not have permission'
     });
   }
 
@@ -176,17 +191,22 @@ exports.getOrderById = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Delete order
+// @desc    Delete order (with org validation)
 // @route   DELETE /api/admin/orders/:orderId
 exports.deleteOrder = asyncHandler(async (req, res) => {
   const { orderId } = req.params;
+  const orgId = req.user.org_id; // Get org_id from authenticated user
 
-  // Check if order exists
-  const [orders] = await db.query('SELECT * FROM orders WHERE order_id = ?', [orderId]);
+  // Check if order exists and belongs to user's organization
+  const [orders] = await db.query(
+    'SELECT * FROM orders WHERE order_id = ? AND org_id = ?', 
+    [orderId, orgId]
+  );
+  
   if (orders.length === 0) {
     return res.status(404).json({
       success: false,
-      message: 'Order not found'
+      message: 'Order not found or you do not have permission'
     });
   }
 

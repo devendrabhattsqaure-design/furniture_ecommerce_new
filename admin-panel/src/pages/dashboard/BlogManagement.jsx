@@ -1,3 +1,4 @@
+import { Edit, Edit2, Trash2 } from "lucide-react";
 import React, { useState, useEffect } from "react";
 
 const BlogManagement = () => {
@@ -7,6 +8,7 @@ const BlogManagement = () => {
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [uploadingImage, setUploadingImage] = useState(false);
+   const [orgId, setOrgId] = useState(JSON.parse(localStorage.getItem('user')).org_id);
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -17,14 +19,15 @@ const BlogManagement = () => {
     tags: '',
     is_published: false,
     meta_title: '',
-    meta_description: ''
+    meta_description: '',
+    org_id:orgId
   });
 
   // Fetch all posts
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5000/api/blog');
+      const response = await fetch(`http://localhost:5000/api/blog/${orgId}`);
       const result = await response.json();
       
       if (result.success) {
@@ -139,6 +142,7 @@ const BlogManagement = () => {
       submitData.append('is_published', formData.is_published);
       submitData.append('meta_title', formData.meta_title);
       submitData.append('meta_description', formData.meta_description);
+      submitData.append('org_id', orgId);
       
       // Append image file if selected
       if (formData.imageFile) {
@@ -351,9 +355,9 @@ const handleEdit = (post) => {
                       onClick={() => handleEdit(post)}
                       className="text-indigo-600 hover:text-indigo-900"
                     >
-                      Edit
+                      <Edit2 className="w-5 h-5" />
                     </button>
-                    <button 
+                    {/* <button 
                       onClick={() => handleTogglePublish(post.post_id, post.is_published)}
                       className={`${
                         post.is_published 
@@ -362,12 +366,12 @@ const handleEdit = (post) => {
                       }`}
                     >
                       {post.is_published ? 'Unpublish' : 'Publish'}
-                    </button>
+                    </button> */}
                     <button 
                       onClick={() => handleDelete(post.post_id)}
                       className="text-red-600 hover:text-red-900"
                     >
-                      Delete
+                      <Trash2 className="w-5 h-5" />
                     </button>
                   </td>
                 </tr>
@@ -454,7 +458,7 @@ const handleEdit = (post) => {
                     />
                   </div>
                   
-                  <div>
+                  {/* <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Slug *
                     </label>
@@ -466,7 +470,7 @@ const handleEdit = (post) => {
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       required
                     />
-                  </div>
+                  </div> */}
                 </div>
 
                 <div>
@@ -511,7 +515,7 @@ const handleEdit = (post) => {
                   />
                 </div>
 
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Tags
                   </label>
@@ -553,7 +557,7 @@ const handleEdit = (post) => {
                       placeholder="SEO meta description"
                     />
                   </div>
-                </div>
+                </div> */}
 
                 <div className="flex items-center">
                   <input

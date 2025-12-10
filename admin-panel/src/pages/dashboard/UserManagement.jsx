@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Users, Edit2, Trash2, X, Plus, Upload, Loader2, Eye, Calendar, DollarSign, Target, TrendingUp } from "lucide-react";
+import { Users, Edit2, Trash2, X, Plus, Upload, Loader2, Eye, Calendar, DollarSign, Target, TrendingUp, Search } from "lucide-react";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from "react-router-dom";
@@ -11,6 +11,7 @@ const UserManagement = () => {
   const [editingUser, setEditingUser] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetchingUsers, setFetchingUsers] = useState(true);
@@ -37,11 +38,12 @@ const UserManagement = () => {
   useEffect(() => {
     fetchUserOrganization();
     fetchUsers();
-  }, []);
+  }, [searchTerm]);
 
   const fetchUserOrganization = async () => {
     try {
       const token = localStorage.getItem('token');
+      
       const response = await fetch(`${API_BASE_URL}/auth/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
@@ -60,29 +62,62 @@ const UserManagement = () => {
     }
   };
 
-  const fetchUsers = async () => {
-    try {
-      setFetchingUsers(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE_URL}/users`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setUsers(data.users || data);
-      } else {
-        toast.error("Failed to fetch users");
+ const fetchUsers = async () => {
+  try {
+    setFetchingUsers(true);
+    const token = localStorage.getItem('token');
+    
+    
+
+    const response = await fetch(`${API_BASE_URL}/users`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
       }
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      toast.error("Error loading users");
-    } finally {
-      setFetchingUsers(false);
+    });
+
+    if (!response.ok) {
+      toast.error("Failed to fetch users");
+      return;
     }
-  };
+
+    const data = await response.json();
+    console.log("Fetched users:", data);
+
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const loggedInRole = storedUser?.role;
+    const loggedInUserId = storedUser?.user_id;
+
+    console.log("Logged-in role:", loggedInRole);
+    console.log("Logged-in user_id:", loggedInUserId);
+
+    let filteredUsers = data.users || data;
+
+    // ✅ If manager → hide admin + hide own record
+    if (loggedInRole === "manager") {
+      filteredUsers = filteredUsers.filter(
+        (u) => u.role !== "admin" && u.user_id !== loggedInUserId
+      );
+    }
+    if (loggedInRole === "admin") {
+      filteredUsers = filteredUsers.filter(
+        (u) =>  u.user_id !== loggedInUserId
+      );
+    }
+let searchedUser = filteredUsers.filter((item) => {
+  if (!searchTerm) return true;   // if input empty → return all
+  return item.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
+});
+    console.log(searchedUser)
+
+    setUsers(searchedUser);
+
+  } catch (error) {
+    console.error("Error fetching users:", error);
+    toast.error("Error loading users");
+  } finally {
+    setFetchingUsers(false);
+  }
+};
 
   const fetchOrganizations = async (userOrgId) => {
     try {
@@ -107,9 +142,42 @@ const UserManagement = () => {
     }
   };
 
+  //   const searchEmployees = async (search = '') => {
+  //   try {
+  //     console.log("jdfkjsdfh")
+  //     const token = localStorage.getItem('token');
+  //     const storedUser = JSON.parse(localStorage.getItem("user"));
+  //     const userId = storedUser.org_id
+  //     console.log(userId)
+  //     const params = new URLSearchParams();
+  //     if (search) params.append('search', search);
+      
+
+  //     const response = await fetch(`http://localhost:5000/api/admin/users/${userId}?${params}`, {
+  //       headers: {
+  //         'Authorization': `Bearer ${token}`
+  //       }
+  //     });
+      
+  //     const data = await response.json();
+  //     if (data.success) {
+  //       console.log(data)
+  //       setUsers(data.data || []);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error searching products:', error);
+  //   }
+  // };
+
+  
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+     const updatedValue =
+    name === "full_name"
+      ? value.charAt(0).toUpperCase() + value.slice(1)
+      : value;
+    setFormData(prev => ({ ...prev, [name]: updatedValue }));
   };
 
   const handleImageChange = (e) => {
@@ -481,17 +549,28 @@ const UserManagement = () => {
       {/* User Management Table */}
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-800">User Management</h2>
+          <h2 className="text-2xl font-bold text-gray-800">Employee Management</h2>
           <div className="flex items-center gap-3">
+           <div className="relative">
+                    <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Search Quotation By Customer Name..."
+                      className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      value={searchTerm}
+                      onChange={(e)=>setSearchTerm(e.target.value)}
+                    />
+                  </div>
             <span className="text-sm text-gray-600">
-              {userOrg === null ? "Super Admin View" : "Organization Users"}
+              {userOrg === null ? "Super Admin View" : "Organization Employee"}
             </span>
+
             <button
               onClick={() => openModal()}
               className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
             >
               <Plus className="w-5 h-5" />
-              Add User
+              Add Employee
             </button>
           </div>
         </div>
@@ -504,7 +583,7 @@ const UserManagement = () => {
           <div className="text-center p-12 text-gray-500">
             <Users className="w-16 h-16 mx-auto mb-4 text-gray-300" />
             <p className="text-lg">No users found</p>
-            <p className="text-sm">Click "Add User" to create your first user</p>
+            <p className="text-sm">Click "Add Employee" to create your first user</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -614,7 +693,7 @@ const UserManagement = () => {
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
             <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
               <h3 className="text-2xl font-bold text-gray-800">
-                {editingUser ? "Edit User" : "Add New User"}
+                {editingUser ? "Edit Employee" : "Add New Employee"}
               </h3>
               <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
                 <X className="w-6 h-6" />
@@ -684,6 +763,9 @@ const UserManagement = () => {
                     Phone Number <span className="text-red-500">*</span>
                   </label>
                   <input
+                  pattern="[0-9]{10}"
+                  maxLength={10}
+                   minLength={10}
                     type="tel"
                     name="phone"
                     value={formData.phone}
@@ -747,10 +829,10 @@ const UserManagement = () => {
                   />
                 </div>
 
-                {/* Date of Birth */}
+                {/* Date of Joining*/}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Date of Birth
+                    Date of Joining
                   </label>
                   <input
                     type="date"
@@ -877,13 +959,13 @@ const UserManagement = () => {
                 <p className="text-xs text-gray-500 mt-2">Maximum file size: 5MB</p>
               </div>
 
-              {!editingUser && (
+              {/* {!editingUser && (
                 <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
                   <p className="text-sm text-blue-800">
                     <strong>Note:</strong> Default password will be set as <strong>name@12345</strong>
                   </p>
                 </div>
-              )}
+              )} */}
 
               {/* Action Buttons */}
               <div className="mt-8 flex justify-end gap-3">
@@ -901,7 +983,7 @@ const UserManagement = () => {
                   className="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
                 >
                   {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-                  {editingUser ? "Update User" : "Add User"}
+                  {editingUser ? "Update Employee" : "Add Employee"}
                 </button>
               </div>
             </form>

@@ -186,56 +186,56 @@ exports.getBusinessReport = asyncHandler(async (req, res) => {
   `, [orgId]);
 
   const reportData = {
-    organization: orgInfo[0] || {},
-    date_range: {
-      start_date: format(startDate, 'yyyy-MM-dd'),
-      end_date: format(endDate, 'yyyy-MM-dd'),
-      report_type
+  organization: orgInfo[0] || {},
+  date_range: {
+    start_date: format(startDate, 'yyyy-MM-dd'),
+    end_date: format(endDate, 'yyyy-MM-dd'),
+    report_type
+  },
+  summary: {
+    today: {
+      total_bills: todayIncome[0]?.total_bills || 0,
+      total_sales: parseFloat(todayIncome[0]?.total_sales || 0).toFixed(2),
+      total_collected: parseFloat(todayIncome[0]?.total_collected || 0).toFixed(2),
+      total_due: parseFloat(todayIncome[0]?.total_due || 0).toFixed(2)
     },
-    summary: {
-      today: {
-        total_bills: todayIncome[0]?.total_bills || 0,
-        total_sales: parseFloat(todayIncome[0]?.total_sales || 0).toFixed(2),
-        total_collected: parseFloat(todayIncome[0]?.total_collected || 0).toFixed(2),
-        total_due: parseFloat(todayIncome[0]?.total_due || 0).toFixed(2)
-      },
-      monthly: {
-        total_bills: monthlyIncome[0]?.total_bills || 0,
-        total_sales: parseFloat(monthlyIncome[0]?.total_sales || 0).toFixed(2),
-        total_collected: parseFloat(monthlyIncome[0]?.total_collected || 0).toFixed(2),
-        total_due: parseFloat(monthlyIncome[0]?.total_due || 0).toFixed(2),
-        average_bill_value: parseFloat(monthlyIncome[0]?.average_bill_value || 0).toFixed(2)
-      },
-      dues: {
-        total_due_bills: totalDues[0]?.total_due_bills || 0,
-        total_due_amount: parseFloat(totalDues[0]?.total_due_amount || 0).toFixed(2),
-        pending_bills: totalDues[0]?.pending_bills || 0,
-        partial_bills: totalDues[0]?.partial_bills || 0
-      },
-      customers: {
-        total_customers: customerStats[0]?.total_customers || 0,
-        new_customers: customerStats[0]?.new_customers || 0,
-        average_spend: parseFloat(customerStats[0]?.average_customer_spend || 0).toFixed(2)
-      }
+    monthly: {
+      total_bills: monthlyIncome[0]?.total_bills || 0,
+      total_sales: parseFloat(monthlyIncome[0]?.total_sales || 0).toFixed(2),
+      total_collected: parseFloat(monthlyIncome[0]?.total_collected || 0).toFixed(2),
+      total_due: parseFloat(monthlyIncome[0]?.total_due || 0).toFixed(2),
+      average_bill_value: parseFloat(monthlyIncome[0]?.average_bill_value || 0).toFixed(2)
     },
-    payment_methods: paymentMethodStats,
-    daily_trend: dailyTrend.map(day => ({
-      ...day,
-      daily_sales: parseFloat(day.daily_sales || 0).toFixed(2),
-      daily_collection: parseFloat(day.daily_collection || 0).toFixed(2),
-      daily_due: parseFloat(day.daily_due || 0).toFixed(2)
-    })),
-    top_products: topProducts.map(product => ({
-      ...product,
-      total_revenue: parseFloat(product.total_revenue || 0).toFixed(2)
-    })),
-    bill_status: billStatus.map(status => ({
-      ...status,
-      total_amount: parseFloat(status.total_amount || 0).toFixed(2),
-      paid_amount: parseFloat(status.paid_amount || 0).toFixed(2),
-      due_amount: parseFloat(status.due_amount || 0).toFixed(2)
-    }))
-  };
+    dues: {
+      total_due_bills: totalDues[0]?.total_due_bills || 0,
+      total_due_amount: parseFloat(totalDues[0]?.total_due_amount || 0).toFixed(2),
+      pending_bills: totalDues[0]?.pending_bills || 0,
+      partial_bills: totalDues[0]?.partial_bills || 0
+    },
+    customers: {
+      total_customers: customerStats[0]?.total_customers || 0,
+      new_customers: customerStats[0]?.new_customers || 0,
+      average_spend: parseFloat(customerStats[0]?.average_customer_spend || 0).toFixed(2)
+    }
+  },
+  payment_methods: paymentMethodStats,
+  daily_trend: dailyTrend.map(day => ({
+    ...day,
+    daily_sales: parseFloat(day.daily_sales || 0).toFixed(2),
+    daily_collection: parseFloat(day.daily_collection || 0).toFixed(2),
+    daily_due: parseFloat(day.daily_due || 0).toFixed(2)
+  })),
+  top_products: topProducts.map(product => ({
+    ...product,
+    total_revenue: parseFloat(product.total_revenue || 0).toFixed(2)
+  })),
+  bill_status: billStatus.map(status => ({
+    ...status,
+    total_amount: parseFloat(status.total_amount || 0).toFixed(2),
+    paid_amount: parseFloat(status.paid_amount || 0).toFixed(2),
+    due_amount: parseFloat(status.due_amount || 0).toFixed(2)
+  }))
+};
 
   res.json({
     success: true,
@@ -645,6 +645,146 @@ exports.getTopCustomers = asyncHandler(async (req, res) => {
         average_bill_value: parseFloat(customer.average_bill_value || 0).toFixed(2),
         last_purchase_date: customer.last_purchase_date ? format(new Date(customer.last_purchase_date), 'dd/MM/yyyy') : 'N/A',
         first_purchase_date: customer.first_purchase_date ? format(new Date(customer.first_purchase_date), 'dd/MM/yyyy') : 'N/A'
+      }))
+    }
+  });
+});
+
+// Add these to your existing businessreport.controller.js
+
+// @desc    Record a payment
+// @route   POST /api/business-report/payments
+exports.recordPayment = asyncHandler(async (req, res) => {
+  const orgId = getOrgId(req);
+  const {
+    bill_id,
+    bill_number,
+    customer_name,
+    customer_phone,
+    payment_amount,
+    previous_due,
+    new_due,
+    payment_method = 'cash',
+    notes,
+    created_by
+  } = req.body;
+
+  if (!orgId) {
+    return res.status(400).json({
+      success: false,
+      message: 'Organization ID is required'
+    });
+  }
+
+  if (!bill_id || !payment_amount || !customer_name) {
+    return res.status(400).json({
+      success: false,
+      message: 'Bill ID, payment amount and customer name are required'
+    });
+  }
+
+  try {
+    const [result] = await db.query(`
+      INSERT INTO payments (
+        org_id, bill_id, bill_number, customer_name, customer_phone,
+        payment_amount, previous_due, new_due, payment_method, notes, created_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [
+      orgId, bill_id, bill_number, customer_name, customer_phone,
+      payment_amount, previous_due, new_due, payment_method, notes, created_by || req.user?.user_id
+    ]);
+
+    // Fetch the created payment record
+    const [payment] = await db.query(`
+      SELECT p.*, u.full_name as collected_by_name 
+      FROM payments p
+      LEFT JOIN users u ON p.created_by = u.user_id
+      WHERE p.payment_id = ?
+    `, [result.insertId]);
+
+    res.status(201).json({
+      success: true,
+      message: 'Payment recorded successfully',
+      data: payment[0]
+    });
+  } catch (error) {
+    console.error('Error recording payment:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to record payment'
+    });
+  }
+});
+
+// @desc    Get all payments with filters
+// @route   GET /api/business-report/payments
+exports.getPayments = asyncHandler(async (req, res) => {
+  const orgId = getOrgId(req);
+  const {
+    customer_name,
+    customer_phone,
+    start_date,
+    end_date,
+    page = 1,
+    limit = 20
+  } = req.query;
+
+  if (!orgId) {
+    return res.status(400).json({
+      success: false,
+      message: 'Organization ID is required'
+    });
+  }
+
+  let query = `
+    SELECT 
+      p.*,
+      u.full_name as collected_by_name,
+      b.total_amount as bill_total_amount
+    FROM payments p
+    LEFT JOIN users u ON p.created_by = u.user_id
+    LEFT JOIN bills b ON p.bill_id = b.bill_id
+    WHERE p.org_id = ?
+  `;
+
+  const params = [orgId];
+
+  if (customer_name) {
+    query += ' AND p.customer_name LIKE ?';
+    params.push(`%${customer_name}%`);
+  }
+
+  if (customer_phone) {
+    query += ' AND p.customer_phone LIKE ?';
+    params.push(`%${customer_phone}%`);
+  }
+
+  if (start_date) {
+    query += ' AND DATE(p.payment_date) >= ?';
+    params.push(start_date);
+  }
+
+  if (end_date) {
+    query += ' AND DATE(p.payment_date) <= ?';
+    params.push(end_date);
+  }
+
+  query += ' ORDER BY p.payment_date DESC';
+  
+  const offset = (page - 1) * limit;
+  query += ' LIMIT ? OFFSET ?';
+  params.push(parseInt(limit), offset);
+
+  const [payments] = await db.query(query, params);
+
+  res.json({
+    success: true,
+    data: {
+      payments: payments.map(payment => ({
+        ...payment,
+        payment_amount: parseFloat(payment.payment_amount).toFixed(2),
+        previous_due: parseFloat(payment.previous_due).toFixed(2),
+        new_due: parseFloat(payment.new_due).toFixed(2)
       }))
     }
   });

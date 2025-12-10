@@ -29,6 +29,7 @@ exports.createBill = asyncHandler(async (req, res) => {
     tax_amount, 
     tax_percentage,
     shipment_charges = 0,
+    installation_charges = 0, 
     payment_method,
     transaction_id,
     cheque_number,
@@ -142,9 +143,10 @@ exports.createBill = asyncHandler(async (req, res) => {
 
   // Calculate shipment charges
   const shipment = parseFloat(shipment_charges) || 0;
+  const installation = parseFloat(installation_charges) || 0;
 
   // Calculate total amount
-  const total_amount = parseFloat((taxableAmount + tax + shipment).toFixed(2));
+  const total_amount = parseFloat((taxableAmount + tax + installation + shipment).toFixed(2));
   
   // Handle payment
   const paidAmount = parseFloat(paid_amount || total_amount);
@@ -180,9 +182,9 @@ exports.createBill = asyncHandler(async (req, res) => {
       `INSERT INTO bills (
         bill_number, customer_name, customer_phone, customer_email, customer_address,
         subtotal, discount_amount, tax_amount, total_amount, total_quantity,
-        gst_type, shipment_charges, payment_method, transaction_id, cheque_number, bank_name,
+        gst_type, shipment_charges,installation_charges, payment_method, transaction_id, cheque_number, bank_name,
         notes, created_by, org_id, paid_amount, due_amount, payment_status, due_date
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         billNumber,
         customer_name,
@@ -196,6 +198,7 @@ exports.createBill = asyncHandler(async (req, res) => {
         totalQuantity,
         gst_type,
         shipment.toFixed(2),
+        installation.toFixed(2),
         payment_method || 'cash',
         transaction_id || null,
         cheque_number || null,

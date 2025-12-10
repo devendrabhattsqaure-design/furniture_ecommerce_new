@@ -44,6 +44,12 @@ app.use('/api/bills', require('./routes/billing.routes'));
 app.use('/api/business-report', require('./routes/businessreport.routes'));
 app.use('/api/organizations', require('./routes/organization.routes'));
 app.use('/api/attendance', require('./routes/attendance.routes'));
+app.use('/api/expenses',require('./routes/expense.routes'))
+app.use('/api/slider',require('./routes/slider.routes'))
+app.use('/api/enquiry',require('./routes/enquiry.routes'))
+app.use('/api/stocks',require('./routes/stock.routes'))
+app.use('/api/quotation',require('./routes/quotation.routes'))
+app.use('/api/payments',require('./routes/payment.routes'))
 
 app.use('/api/user-targets', require('./routes/target.routes'));
 
