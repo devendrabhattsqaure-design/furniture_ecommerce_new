@@ -3,6 +3,9 @@ import {
   HomeIcon,
   UserCircleIcon,
   TableCellsIcon,
+ 
+  
+  ChatBubbleLeftRightIcon,
   InformationCircleIcon,
   ServerStackIcon,
   RectangleStackIcon,
@@ -18,6 +21,7 @@ import {
   PlusIcon,
   ReceiptPercentIcon,
   BuildingOfficeIcon,
+  ChartBarIcon,
 } from "@heroicons/react/24/solid";
 import { Home, Profile, Tables, Notifications } from "@/pages/dashboard";
 import { SignIn, SignUp } from "@/pages/auth";
@@ -41,187 +45,194 @@ import ExpenseManagement from "./pages/dashboard/ExpenseManagement";
 import StockManagement from "./pages/dashboard/StockManagement";
 import QuotationManagement from "./pages/dashboard/QuotationManagement";
 
-
 const icon = {
   className: "w-5 h-5 text-inherit",
 };
 
-// Function to get user role from localStorage
-const getUserRole = () => {
-  if (typeof window === 'undefined') return null;
+// Get all routes based on user role
+export const getRoutes = (user) => {
+  const userRole = user?.role;
   
-  try {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      const user = JSON.parse(userData);
-      return user.role;
-    }
-    return null;
-  } catch (error) {
-    console.error('Error parsing user data:', error);
-    return null;
-  }
+  // Define all possible routes with categories
+  const allRoutes = {
+    // Direct Links (no dropdown)
+    dashboard: {
+      icon: <HomeIcon {...icon} />,
+      name: "dashboard",
+      path: "/home",
+      element: <Home />,
+      show: true,
+      category: "direct",
+    },
+     enquiry: {
+     icon: <ChatBubbleLeftRightIcon {...icon} />
+,
+      name: "enquiry",
+      path: "/enquiry",
+      element: <EnquiryManagement />,
+      show: true,
+      category: "direct", // Changed from reports to direct
+    },
+    billingManagement: {
+      icon: <CreditCardIcon {...icon} />,
+      name: "billing management",
+      path: "/billing-management",
+      element: <BillingManagement />,
+      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      category: "direct", // Changed from management to direct
+    },
+     orderManagement: {
+      icon: <ShoppingBagIcon {...icon} />,
+      name: "order management",
+      path: "/order-management",
+      element: <OrderManagement />,
+      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      category: "direct", // Changed from management to direct
+    },
+    
+    expense: {
+      icon: <ReceiptPercentIcon {...icon} />,
+      name: "expense",
+      path: "/expense",
+      element: <ExpenseManagement />,
+      show: true,
+      category: "direct", // Changed from reports to direct
+    },
+    
+    quotation: {
+     icon: <DocumentTextIcon {...icon} />,
+      name: "quotation",
+      path: "/quotation",
+      element: <QuotationManagement />,
+      show: true,
+      category: "direct", // Changed from reports to direct
+    },
+    
+    // profile: {
+    //   icon: <UserCircleIcon {...icon} />,
+    //   name: "profile",
+    //   path: "/profile",
+    //   element: <Profile />,
+    //   show: true,
+    //   category: "direct",
+    // },
+    
+   
+    
+    
+    
+   
+    
+    // tables: {
+    //   icon: <TableCellsIcon {...icon} />,
+    //   name: "tables",
+    //   path: "/tables",
+    //   element: <Tables />,
+    //   show: ['admin', 'manager', 'super_admin'].includes(userRole),
+    //   category: "direct", 
+    // },
+    
+    // Super Admin ONLY pages (direct links)
+    organizationManagement: {
+      icon: <BuildingOfficeIcon {...icon} />,
+      name: "organization management",
+      path: "/organization-management",
+      element: <OrganizationManagement />,
+      show: userRole === 'super_admin',
+      category: "direct",
+    },
+    
+    notifications: {
+      icon: <InformationCircleIcon {...icon} />,
+      name: "notifications",
+      path: "/notifications",
+      element: <Notifications />,
+      show: userRole === 'super_admin',
+      category: "direct",
+    },
+    
+    // ==================== DROPDOWN 1: Management ====================
+    employeeManagement: {
+      icon: <UsersIcon {...icon} />,
+      name: "employee management",
+      path: "/employee-management",
+      element: <UserManagement />,
+      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      category: "management",
+    },
+    
+    attendanceManagement: {
+      icon: <CalendarDaysIcon {...icon} />,
+      name: "attendance management",
+      path: "/attendance-management",
+      element: <AttendanceManagement />,
+      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      category: "management",
+    },
+    
+    categoryManagement: {
+      icon: <TagIcon {...icon} />,
+      name: "category management",
+      path: "/category-management",
+      element: <CategoryManagement />,
+      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      category: "management", // Changed from content to management
+    },
+    
+    productManagement: {
+      icon: <CubeIcon {...icon} />,
+      name: "product management",
+      path: "/product-management",
+      element: <ProductManagement />,
+      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      category: "management", // Changed from content to management
+    },
+    
+    // ==================== DROPDOWN 2: Reports & Analytics ====================
+    businessReport: {
+      icon: <ChartBarIcon {...icon} />,
+      name: "business report",
+      path: "/business-report",
+      element: <BusinessReport />,
+      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      category: "reports",
+    },
+    
+    stocks: {
+      icon: <InformationCircleIcon {...icon} />,
+      name: "stocks",
+      path: "/stocks",
+      element: <StockManagement />,
+      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      category: "reports",
+    },
+    
+    // ==================== DROPDOWN 3: Content ====================
+    blog: {
+      icon: <DocumentTextIcon {...icon} />,
+      name: "blog",
+      path: "/blog",
+      element: <BlogManagement />,
+      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      category: "content",
+    },
+    
+    slider: {
+      icon: <PhotoIcon {...icon} />,
+      name: "slider",
+      path: "/slider",
+      element: <SliderManagement />,
+      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      category: "content",
+    },
+  };
+
+  // Filter routes based on user role
+  return Object.values(allRoutes).filter(route => route.show);
 };
 
-const isSuperAdmin = () => {
-  const role = getUserRole();
-  return role === 'super_admin';
-};
-
-const isAdmin = () => {
-  const role = getUserRole();
-  return role === 'admin';
-};
-
-// Function to check if user has access to specific feature
-const hasAccess = (requiredRole) => {
-  const userRole = getUserRole();
-  if (requiredRole === 'super_admin') {
-    return userRole === 'super_admin';
-  }
-  if (requiredRole === 'admin') {
-    return userRole === 'admin' || userRole === 'super_admin'||userRole==='manager';
-  }
-  return true; // For other roles or no specific requirement
-};
-
-// Super Admin ONLY pages
-const superAdminPages = [
-  {
-        icon: <HomeIcon {...icon} />,
-        name: "dashboard",
-        path: "/home",
-        element: <Home />,
-      },
-  {
-    icon: <UserCircleIcon {...icon} />,
-    name: "profile",
-    path: "/profile",
-    element: <Profile />,
-    requiredRole: 'super_admin',
-  },
-  {
-    icon: <BuildingOfficeIcon {...icon} />,
-    name: "organization management",
-    path: "/organization-management",
-    element: <OrganizationManagement />,
-    requiredRole: 'super_admin',
-  },
-  {
-    icon: <InformationCircleIcon {...icon} />,
-    name: "notifications",
-    path: "/notifications",
-    element: <Notifications />,
-    requiredRole: 'super_admin',
-  },
-];
-
-// Admin pages (regular admin access)
-const adminPages = [
-
-  {
-    icon: <HomeIcon {...icon} />,
-    name: "dashboard",
-    path: "/home",
-    element: <Home />,
-  },
-  {
-    icon: <UsersIcon {...icon} />,
-    name: "employee management",
-    path: "/employee-management",
-    element: <UserManagement />,
-    requiredRole: 'admin'||'manager',
-  },
-  {
-    icon: <DocumentTextIcon {...icon} />,
-    name: "blog",
-    path: "/blog",
-    element: <BlogManagement />,
-  },
-  {
-    icon: <PhotoIcon {...icon} />,
-    name: "slider",
-    path: "/slider",
-    element: <SliderManagement />,
-  },
-  {
-    icon: <TagIcon {...icon} />,
-    name: "category management",
-    path: "/category-management",
-    element: <CategoryManagement />,
-  },
-  {
-    icon: <CubeIcon {...icon} />,
-    name: "product management",
-    path: "/product-management",
-    element: <ProductManagement />,
-  },
-  {
-    icon: <TableCellsIcon {...icon} />,
-    name: "tables",
-    path: "/tables",
-    element: <Tables />,
-  },
-  {
-    icon: <ShoppingBagIcon {...icon} />,
-    name: "order management",
-    path: "/order-management",
-    element: <OrderManagement />,
-    requiredRole: 'admin'||'manager',
-  },
-  {
-    icon: <CalendarDaysIcon {...icon} />,
-    name: "attendance management",
-    path: "/attendance-management",
-    element: <AttendanceManagement />,
-    requiredRole: 'admin'||'manager',
-  },
-  {
-    icon: <CreditCardIcon {...icon} />,
-    name: "billing management",
-    path: "/billing-management",
-    element: <BillingManagement />,
-    requiredRole: 'admin'||'manager',
-  },
-  {
-    icon: <CreditCardIcon {...icon} />,
-    name: "business report",
-    path: "/business-report",
-    element: <BusinessReport />,
-    requiredRole: 'admin'||'manager',
-  },
-   {
-    icon: <InformationCircleIcon {...icon} />,
-    name: "quotation",
-    path: "/quotation",
-    element: <QuotationManagement />,
-  },
-  {
-    icon: <InformationCircleIcon {...icon} />,
-    name: "stocks",
-    path: "/stocks",
-    element: <StockManagement />,
-  },
-  {
-    icon: <InformationCircleIcon {...icon} />,
-    name: "enquiry",
-    path: "/enquiry",
-    element: <EnquiryManagement />,
-  },
-   {
-    icon: <InformationCircleIcon {...icon} />,
-    name: "expense",
-    path: "/expense",
-    element: <ExpenseManagement />,
-  },
-
-  
-  
-];
-
-// Hidden pages (not in sidebar)
-const hiddenPages = [
-  // Create Bill Page
+// Hidden routes (not in sidebar)
+export const hiddenRoutes = [
   {
     icon: <PlusIcon {...icon} />,
     name: "Create Bill",
@@ -229,7 +240,6 @@ const hiddenPages = [
     element: <BillCreate />,
     hideFromSidebar: true,
   },
-  // View Bill Page
   {
     icon: <ReceiptPercentIcon {...icon} />,
     name: "View Bill",
@@ -237,7 +247,6 @@ const hiddenPages = [
     element: <BillView />,
     hideFromSidebar: true,
   },
-  // User Details Page
   {
     icon: <EyeIcon {...icon} />,
     name: "user details",
@@ -247,65 +256,33 @@ const hiddenPages = [
   },
 ];
 
-// Combine pages based on user role
-const getDashboardPages = () => {
-  const userRole = getUserRole();
-  let pages = [];
-  
-  if (userRole === 'super_admin') {
-    // Super admin gets ONLY: profile, organization management, and notifications
-    pages = [...superAdminPages];
-  } else if (userRole === 'admin'||userRole === 'manager') {
-    // Admin gets all admin pages (except super admin pages)
-    pages = [...adminPages];
-  } else {
-    // Regular users or no role - show basic pages (optional)
-    pages = [
-      {
-        icon: <HomeIcon {...icon} />,
-        name: "dashboard",
-        path: "/home",
-        element: <Home />,
-      },
-      {
-        icon: <UserCircleIcon {...icon} />,
-        name: "profile",
-        path: "/profile",
-        element: <Profile />,
-      },
-    ];
-  }
-  
-  // Always add hidden pages (they're not shown in sidebar)
-  pages = [...pages, ...hiddenPages];
-  
-  return pages;
-};
+// Auth routes
+export const authRoutes = [
+  {
+    icon: <ServerStackIcon {...icon} />,
+    name: "sign in",
+    path: "/sign-in",
+    element: <SignIn />,
+  },
+  {
+    icon: <RectangleStackIcon {...icon} />,
+    name: "sign up",
+    path: "/sign-up",
+    element: <SignUp />,
+  },
+];
 
-export const routes = [
+// For backward compatibility with existing code
+export const routes = (user) => [
   {
     layout: "dashboard",
-    pages: getDashboardPages(),
+    pages: [...getRoutes(user), ...hiddenRoutes],
   },
   {
     title: "auth pages",
     layout: "auth",
-    pages: [
-      {
-        icon: <ServerStackIcon {...icon} />,
-        name: "sign in",
-        path: "/sign-in",
-        element: <SignIn />,
-      },
-      {
-        icon: <RectangleStackIcon {...icon} />,
-        name: "sign up",
-        path: "/sign-up",
-        element: <SignUp />,
-      },
-    ],
+    pages: authRoutes,
   },
 ];
 
 export default routes;
-export { getUserRole, hasAccess };
