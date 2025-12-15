@@ -176,7 +176,7 @@ fetchCompany()
 
     <div className="border-t pt-3 mt-3 flex justify-between text-lg font-bold">
       <span>Grand Total:</span>
-      <span>₹ {quotation.grand_total}</span>
+      <span>₹ {Math.ceil(quotation.grand_total)}</span>
     </div>
   </div>
 </div>

@@ -13,6 +13,7 @@ exports.createQuotation = asyncHandler(async(req,res)=>{
     discount_amount,
     discount_percentage,
     shipping_charges,
+    installation_charges,
     items, // array of quotation items
   } = req.body;
 
@@ -52,16 +53,16 @@ console.log(items)
 //   let gst_amoun = (sub_total * gst_percentage) / 100;
 //   let grand_total = sub_total + gst_amount - discount_amount;
 //   console.log(grand_total)
-  const total = sub_total - discount + tax +Number(shipping_charges);
+  const total = sub_total - discount + tax +Number(shipping_charges)+Number(installation_charges);
 
 const [rows] = await db.query(`INSERT INTO quotations (
  
         org_id,customer_name, customer_mobile, customer_address,
        quotation_date,
        sub_total,gst_rate,gst_amount, 
-       discount_rate,discount_amount, shipping_charges, grand_total
+       discount_rate,discount_amount, shipping_charges,installation_charges, grand_total
      ) 
-     VALUES (?,?, ?, ?,  NOW(),  ?,? ,?,?,? ,?,?)`, [
+     VALUES (?,?, ?, ?,  NOW(),  ?,? ,?,?,? ,?,?,?)`, [
       orgId,
       customer_name,
       customer_phone,
@@ -73,7 +74,8 @@ const [rows] = await db.query(`INSERT INTO quotations (
       discount_percentage,
       discount,
       shipping_charges,
-      total,
+      installation_charges,
+      Math.ceil(total),
     ])
 console.log(rows)
     const quotationId = rows.insertId;
@@ -139,7 +141,10 @@ exports.searchQuotations = asyncHandler(async (req, res) => {
 
 exports.getQuotations = asyncHandler(async(req,res)=>{
   let {orgId} = req.params
-  const [rows] = await db.query(`SELECT * FROM quotations WHERE org_id=${orgId}`)
+  const [rows] = await db.query(`SELECT * 
+FROM quotations 
+WHERE org_id = ${orgId}
+ORDER BY created_at DESC;`)
   if(rows.length==0){
     return res.status(200).json({
       message:"No result found",
@@ -174,7 +179,8 @@ FROM quotations q
 LEFT JOIN quotation_items qi
   ON q.quotation_id = qi.quotation_id
 WHERE q.quotation_id = ${quotationId} 
-GROUP BY q.quotation_id`)
+GROUP BY q.quotation_id
+`)
   
   if(rows.length==0){
     return res.status(200).json({

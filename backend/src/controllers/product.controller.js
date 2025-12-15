@@ -1,5 +1,7 @@
 const db = require('../config/database');
 const asyncHandler = require('express-async-handler');
+const QRCode = require('qrcode')
+const bwipjs = require('bwip-js')
 
 
 
@@ -88,7 +90,6 @@ exports.getAllProducts = asyncHandler(async (req, res) => {
     LEFT JOIN categories c ON p.category_id = c.category_id 
     WHERE p.org_id = ? AND c.org_id = ?
   `;
-
   const params = [orgId, orgId];
 
   if (category_id) {
@@ -223,12 +224,10 @@ exports.updateProduct = asyncHandler(async (req, res) => {
     };
   }
 
-   const {
+  const {
     product_name, slug, sku, category_id, brand, description,
     short_description, price, compare_price, cost_price, material,
     color, dimensions, weight, stock_quantity, low_stock_threshold,
-    warranty_period, warranty_type, guarantee_period,
-    warranty_details, guarantee_details,
     is_featured, is_bestseller, is_new_arrival, is_on_sale, is_active
   } = updateData;
 
@@ -245,15 +244,12 @@ exports.updateProduct = asyncHandler(async (req, res) => {
     }
   }
 
-    await db.query(
+  await db.query(
     `UPDATE products SET 
       product_name = ?, slug = ?, sku = ?, category_id = ?, brand = ?, 
       description = ?, short_description = ?, price = ?, compare_price = ?, 
       cost_price = ?, material = ?, color = ?, dimensions = ?, weight = ?, 
-      stock_quantity = ?, low_stock_threshold = ?,
-      warranty_period = ?, warranty_type = ?, guarantee_period = ?,
-      warranty_details = ?, guarantee_details = ?,
-      is_featured = ?, 
+      stock_quantity = ?, low_stock_threshold = ?, is_featured = ?, 
       is_bestseller = ?, is_new_arrival = ?, is_on_sale = ?, is_active = ?,
       updated_at = NOW()
     WHERE product_id = ?`,
@@ -261,11 +257,6 @@ exports.updateProduct = asyncHandler(async (req, res) => {
       product_name, slug, sku, category_id, brand, description,
       short_description, price, compare_price, cost_price, material,
       color, dimensions, weight, stock_quantity, low_stock_threshold,
-      warranty_period || null,
-      warranty_type || null,
-      guarantee_period || null,
-      warranty_details || null,
-      guarantee_details || null,
       is_featured,
       is_bestseller,
       is_new_arrival,
@@ -345,9 +336,7 @@ exports.createProduct = asyncHandler(async (req, res) => {
     product_name, slug, sku, category_id, brand, description,
     short_description, price, compare_price, cost_price, material,
     color, dimensions, weight, stock_quantity, low_stock_threshold,
-    warranty_period, warranty_type, guarantee_period, 
-    warranty_details, guarantee_details,
-    is_featured, is_bestseller, is_new_arrival, is_on_sale
+    is_featured, is_bestseller, is_new_arrival, is_on_sale,vendor_id
   } = productData;
 
   // Check if category belongs to same organization
@@ -378,28 +367,61 @@ exports.createProduct = asyncHandler(async (req, res) => {
       product_name, slug, sku, category_id, brand, description, 
       short_description, price, compare_price, cost_price, material, 
       color, dimensions, weight, stock_quantity, low_stock_threshold,
-      warranty_period, warranty_type, guarantee_period,
-      warranty_details, guarantee_details,
-      is_featured, is_bestseller, is_new_arrival, is_on_sale, org_id
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      is_featured, is_bestseller, is_new_arrival, is_on_sale, org_id,vendor_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`,
     [
       product_name, slug, sku, category_id, brand, description, 
       short_description, price, compare_price, cost_price, material, 
       color, dimensions, weight, stock_quantity, low_stock_threshold,
-      warranty_period || null,
-      warranty_type || null,
-      guarantee_period || null,
-      warranty_details || null,
-      guarantee_details || null,
       is_featured === 'true' || is_featured === true,
       is_bestseller === 'true' || is_bestseller === true,
       is_new_arrival === 'true' || is_new_arrival === true,
       is_on_sale === 'true' || is_on_sale === true,
-      orgId
+      orgId,vendor_id
     ]
   );
 
   const productId = result.insertId;
+   // 2️⃣ Data to encode
+  const qrData = JSON.stringify({
+    productId,
+    product_name,
+    price,
+    sku
+  });
+
+  // 3️⃣ Generate QR Code (Base64)
+  const qrCode = await QRCode.toDataURL(qrData);
+
+
+  // 4️⃣ Generate Barcode (CODE128)
+  const barcodeBuffer = await bwipjs.toBuffer({
+    bcid: "code128",
+    text: sku,
+    scale: 3,
+    height: 10,
+    includetext: true,
+    textxalign: "center",
+  });
+
+  const barcodeBase64 = `data:image/png;base64,${barcodeBuffer.toString(
+    "base64"
+  )}`; 
+
+    // 5️⃣ Save QR & Barcode
+  await db.query(
+    `UPDATE products 
+     SET qr_code = ?, barcode = ?
+     WHERE product_id = ?`,
+    [qrCode, barcodeBase64, productId]
+  );
+
+  
+  await db.query(`INSERT INTO vendors_items (
+    vendor_id,product_name,sku,product_quantity,product_price
+    ) VALUES (?,?,?,?,?)`,[
+      vendor_id,product_name,sku,stock_quantity,price
+    ])
 
   // Upload images if provided
   if (req.files && req.files.length > 0) {

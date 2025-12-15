@@ -16,7 +16,8 @@ import {
   CreditCard,
   Smartphone,
   Building,
-  Receipt
+  Receipt,
+  QrCode,
 } from "lucide-react";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -29,6 +30,8 @@ const BillCreate = () => {
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [qrCodeUrl, setQrCodeUrl] = useState(null);
+const [showQRModal, setShowQRModal] = useState(false);
 
   const [formData, setFormData] = useState({
     customer_name: '',
@@ -323,6 +326,12 @@ installation_charges: '',
 
     if (response.ok) {
       toast.success("Bill created successfully!");
+      if (data.data.qr_code_url) {
+        setQrCodeUrl(data.data.qr_code_url);
+        setShowQRModal(true);
+      } else {
+        navigate('/dashboard/billing-management');
+      }
       navigate('/dashboard/billing-management');
     } else {
       console.error('Error response:', data);

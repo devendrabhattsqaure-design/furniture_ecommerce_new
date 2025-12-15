@@ -1,6 +1,7 @@
-import { Edit2, Filter, PlusIcon, Search, Trash2 } from 'lucide-react';
+import { DollarSign, Edit2, Filter, PlusIcon, Search, Trash2, TrendingUp } from 'lucide-react';
 import React, { useEffect, useState } from 'react'
 import { FaEdit, FaTrash } from "react-icons/fa";
+import { toast, ToastContainer } from 'react-toastify';
 
 const ExpenseManagement = () => {
    const [page, setPage] = useState(1);
@@ -11,21 +12,26 @@ const ExpenseManagement = () => {
        // Edit Modal State
   const [editItem, setEditItem] = useState(null);
     const [addItem, setAddItem] = useState(null);
-    const [filter, setFilter] = useState({});
+    const [expenseTotal, setExpenseTotal] = useState(0);
+    const [monthTotal, setMonthTotal] = useState(0);
+    const [filter, setFilter] = useState();
+    const [searchTerm, setSearchTerm] = useState('');
 
   // Delete Confirmation
   const [deleteId, setDeleteId] = useState(null);
   const [orgId, setOrgId] = useState(JSON.parse(localStorage.getItem('user')).org_id);
   const [form, setForm] = useState({
-      expense_date: "",
-      main_head :"",
-      debit: "",
-      org_id:"",
-      credit:"",
-      added_by:"",
-      added_date:"",
-      updated_by:"",
-      updated_date:""
+     expense_date: "",
+      vendor_name :"",
+      amount: "",
+      paid_by:"",
+      category:"",
+      service:"",
+      payment_method:"",
+      transaction_type:"",
+      description:"",
+      bill_image:'',
+      remark:""
 
     });
 
@@ -35,25 +41,51 @@ const ExpenseManagement = () => {
   
    const handleSave = async() => {
     // console.log(form)
+    // if (form.bill_image) {
+    //     submitData.append('image_url', formData.image_url);
+    //   }
+
+    const submitData = new FormData();
+     submitData.append('expense_date', form.expense_date);
+     submitData.append('category', form.category);
+     submitData.append('service', form.service);
+     submitData.append('vendor_name', form.vendor_name);
+     submitData.append('paid_by', form.paid_by);
+     submitData.append('amount', form.amount);
+     submitData.append('payment_method', form.payment_method);
+     submitData.append('transaction_type', form.transaction_type);
+     submitData.append('description', form.description);
+     submitData.append('remark', form.remark);
+      if (form.bill_image) {
+        submitData.append('bill_image', form.bill_image);
+      }
      try {
       const res = await fetch(`http://localhost:5000/api/expenses/create-expense/${orgId}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+       
+        body: submitData,
       });
 
       const data = await res.json();
       console.log(data)
       if (data.success) {
-        alert("Expense addes successfully!");
+        toast.success("Expense added successfully")
         fetchExpenses(); // refresh list
         setAddItem(false);
         setForm({  expense_date: "",
-      main_head :"",
-      debit: "",
+      vendor_name :"",
+      amount: "",
       org_id:"",
-      credit:"",
-      added_by:"",
+     
+      paid_by:"",
+      category:"",
+      service:"",
+      payment_method:"",
+      transaction_type:"",
+      description:"",
+      bill_image:'',
+      remark:''
+
       });
       }
     } catch (err) {
@@ -62,25 +94,46 @@ const ExpenseManagement = () => {
   };
    const handleEditData = async(id) => {
     // console.log(form)
+    const submitData = new FormData();
+     submitData.append('expense_date', form.expense_date);
+     submitData.append('category', form.category);
+     submitData.append('service', form.service);
+     submitData.append('vendor_name', form.vendor_name);
+     submitData.append('paid_by', form.paid_by);
+     submitData.append('amount', form.amount);
+     submitData.append('payment_method', form.payment_method);
+     submitData.append('transaction_type', form.transaction_type);
+     submitData.append('description', form.description);
+     submitData.append('remark', form.remark);
+      if (form.bill_image) {
+        submitData.append('bill_image', form.bill_image);
+      }
      try {
       const res = await fetch(`http://localhost:5000/api/expenses/edit/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        
+        body: submitData,
       });
 
       const data = await res.json();
 
       if (data.success) {
-        alert("Expense updated successfully!");
+        toast.success("Expense updated successfully")
         fetchExpenses(); // refresh list
         setEditItem(false);
         setForm({  expense_date: "",
-      main_head :"",
-      debit: "",
+      vendor_name :"",
+      amount: "",
       org_id:"",
-      credit:"",
-      added_by:"",
+     
+      paid_by:"",
+      category:"",
+      service:"",
+      payment_method:"",
+      transaction_type:"",
+      description:"",
+      bill_image:'',
+      remark:''
       });
       }
     } catch (err) {
@@ -95,6 +148,7 @@ const ExpenseManagement = () => {
       });
       const data = await res.json();
       if(data.success){
+        toast.success("Expense deleted successfully")
         setDeleteId(false)
         fetchExpenses()
         
@@ -107,8 +161,16 @@ const ExpenseManagement = () => {
       const res = await fetch(`http://localhost:5000/api/expenses/${orgId}?page=${page}`);
       const data = await res.json();
       // console.log(data)
-      setExpense(data.data);
+
+     let expense = data.data
       // console.log(data.data,'data')
+      let searchedUser = expense.filter((item) => {
+  if (!searchTerm) return true;   // if input empty → return all
+  return item.vendor_name?.toLowerCase().includes(searchTerm.toLowerCase());
+});
+setExpenseTotal(data.todayTotal)
+setMonthTotal(data.monthTotal)
+setExpense(searchedUser)
       setTotalPage(data.totalPages)
     } catch (err) {
       console.error("Error fetching expenses", err);
@@ -120,81 +182,160 @@ const ExpenseManagement = () => {
     setForm(item)
   }
 
-  const fetchFilteredExpense = async () => {
-    // console.log(filter.month)
-  const month = filter?.month?.slice(5);
-  const year = filter?.month?.slice(0, 4);
+  const handleAddItem = ()=>{
+    setAddItem(true)
+    setForm({
+      expense_date: "",
+      vendor_name :"",
+      amount: "",
+      org_id:"",
+     
+      paid_by:"",
+      category:"",
+      service:"",
+      payment_method:"",
+      transaction_type:"Debit",
+      bill_image:'',
+      description:"",
+      remark:"",
+    })
+  }
 
-  const res = await fetch(
-    `http://localhost:5000/api/expenses/filter-expense/${orgId}?month=${month}&year=${year}&page=${filterPage || 1}`
-  );
-
-  const data = await res.json();
-
-  setExpense(data.data);
-  setFilterTotalPage(data.filterTotal);
-};
 
 
-  const handleFilter = async (e) => {
-  const value = e.target.value;  // YYYY-MM
-     if (value === "") {
+
+const handleFilter = async (e) => {
+  const value = e.target.value; // YYYY-MM
+
+  if (value === "") {
     setFilter({ month: "" });
     setFilterPage(null);
-    setFilterTotalPage(null)
+    setFilterTotalPage(null);
     fetchExpenses();
     return;
   }
 
-  // update state
-  setFilter({ ...filter, month: value });
-
-  // extract month + year from value
-  const month = value.slice(5);     // MM
-  const year = value.slice(0,4); 
-  console.log(year)  // YYYY
+  
+  setFilter(value);
 
   try {
     const res = await fetch(
-      `http://localhost:5000/api/expenses/filter-expense/${orgId}?month=${month}&year=${year}`
+      `http://localhost:5000/api/expenses/filter-expense/${orgId}?date=${value}`
     );
 
     const data = await res.json();
-    // console.log(data);
 
-    if (data.data) {
+    if (data.success) {
       setExpense(data.data);
-    setFilterPage(data.page);
-    setFilterTotalPage(data.filterTotal);
+      setFilterPage(data.page);
+      setFilterTotalPage(data.filterTotal);
+      setMonthTotal(data.monthTotal)
     }
-
   } catch (err) {
     console.error("Error fetching expenses", err);
   }
 };
+;
+const handleImageSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file (JPEG, PNG, WebP, GIF)');
+        return;
+      }
 
-useEffect(()=>{
-  if (filter.month !== "") {
-    fetchFilteredExpense();
-  }
-},[filterPage])
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should be less than 5MB');
+        return;
+      }
+
+      // Create preview
+     
+      // Store file for upload
+      setForm(prev => ({
+        ...prev,
+        bill_image: file
+      }));
+    }
+  };
+
+
+  // const handleTodayExpense = async()=>{
+  //   let res = await fetch(`http://localhost:5000/api/expenses/total/${orgId}`,{
+  //     method:"GET"
+  //   })
+  //   let data = await res.json()
+  //   if(data.success){
+  //     setExpenseTotal(data.total)
+  //   }
+  // }
+
+// useEffect(()=>{
+//   if (filter !== "") {
+//     fetchFilteredExpense();
+//   }
+// },[filterPage,searchTerm])
 
   useEffect(()=>{
     let id = JSON.parse(localStorage.getItem('user')).org_id
       setOrgId(id)
     fetchExpenses()
     
-  },[page])
+  },[page,searchTerm])
   return (
+    <>
+    <ToastContainer/>
     <div className="min-h-screen bg-gray-50 py-6">
      
-     
+     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {/* Today's Income */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-2 bg-blue-100 rounded-lg">
+                  <DollarSign className="w-6 h-6 text-blue-600" />
+                </div>
+                <span className="text-sm font-medium text-green-600">Today</span>
+              </div>
+              
+              <p className="text-gray-600">Total Expense</p>
+              <div className="mt-4  text-md">
+                <div>
+                  
+                  <p className="font-semibold text-xl">₹ {expenseTotal}</p>
+                </div>
+                
+              </div>
+            </div>
+
+            {/* Monthly Income */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <TrendingUp className="w-6 h-6 text-green-600" />
+                </div>
+                <span className="text-sm font-medium text-green-600">Monthly</span>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-1">
+                {/* {formatCurrency(reportData.summary.monthly.total_sales)} */}
+              </h3>
+              <p className="text-gray-600">Monthly Expense</p>
+              <div className="mt-4  text-sm">
+                <div>
+                 <p className="font-semibold text-xl">₹ {monthTotal}</p>
+                </div>
+                
+              </div>
+            </div>
+            </div>
        
           <div className="bg-white p-4  shadow-md overflow-hidden">
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <h2 className="text-2xl font-bold text-gray-800">Expense Management</h2>
+        
           <button
-            onClick={()=>setAddItem(true)}
+            onClick={()=>handleAddItem()}
             className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
           >
             <PlusIcon className="w-5 h-5 mr-2" />
@@ -209,13 +350,21 @@ useEffect(()=>{
                       <Filter className="w-4 h-4 text-gray-500" />
                      
                     </div>
-                   <div className="mt-4 flex flex-wrap items-center ">
+                   <div className="mt-4 flex flex-wrap items-center gap-2 ">
                   <input
-                      type="month"
+                      type="date"
                        className="border px-3 py-1 rounded"
-                       value={filter.month}
+                       value={filter}
                        onChange={handleFilter}
                   />
+                  <input
+                      type="text"
+                       className="border px-3 py-1 rounded text-md"
+                       placeholder='Search By Vendor Name'
+                       value={searchTerm}
+                       onChange={(e)=>setSearchTerm(e.target.value)}
+                  />
+
                   
                      </div>
                    
@@ -228,29 +377,35 @@ useEffect(()=>{
       >
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Expense Date</th>
-            <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Main Head</th>
-            <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Credit</th>
-            <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Debit</th>
-            <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Net Balance</th>
-            <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Added By</th>
+            <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">S.No.</th>
+            <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Expense Date</th>
+            <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Paid By</th>
+            <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Amount</th>
+            <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Category</th>
+            <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Product/<br/>Service</th>
+            <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Vendor Name</th>
+            <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Payment<br/> Method</th>
+            <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Transaction<br/> Type</th>
             
             <th className="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Action</th>
           </tr>
         </thead>
 
         <tbody className="bg-white divide-y divide-gray-200">
-          {expense?.map((item) => (
+          {expense?.map((item,i) => (
             <tr className="hover:bg-gray-50 transition-colors" key={item.id}>
+              <td className='text-center'>{i+1}</td>
               <td className="px-6 py-4 whitespace-nowrap">{new Date(item.expense_date).toLocaleDateString()}</td>
-              <td className='text-center'>{item.main_head}</td>
-              <td className='text-center'>₹ {item.credit}</td>
-              <td className='text-center'>₹ {item.debit}</td>
-              <td className='text-center'> ₹ {item.net_balance}</td>
-              <td className='text-center'>{item.added_by}</td>
+              <td className='text-center'>{item.paid_by}</td>
+              <td className='text-center'>₹ {item.amount}</td>
+              <td className='text-center'> {item.category}</td>
+              <td className='text-center'>  {item.service}</td>
+              <td className='text-center'>{item.vendor_name}</td>
+              <td className='text-center'>{item.payment_method}</td>
+              <td className='text-center'>{item.transaction_type}</td>
              
               <td className='items-center'>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center gap-2">
                        
                         <button
                           onClick={() => handleEdit(item)}
@@ -300,143 +455,347 @@ useEffect(()=>{
       </div>
 
 {addItem && (
-  <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-    <div className="bg-white w-96 p-6 rounded-xl shadow-lg">
-      <h3 className="text-xl font-semibold mb-4">Edit Expense</h3>
-        <form >
-         <label className="block text-sm font-medium">Expense Date</label>
-      <input
-        type="date"
-        name='expense_date'
-        onChange={handleChange}
-        value={form.expense_date}
+<div className="fixed inset-0 bg-black bg-opacity-40 w-full flex justify-center items-center z-50">
+  <div className="bg-white w-full max-w-5xl p-6 rounded-xl shadow-lg">
+    <h3 className="text-xl font-semibold mb-4">Create Expense</h3>
+
+    <form className="space-y-4">
+      {/* GRID LAYOUT - 4 COLUMNS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        {/* Expense Date */}
+        <div>
+          <label className="block text-sm font-medium">Expense Date</label>
+          <input
+            type="date"
+            name="expense_date"
+            value={form.expense_date}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg"
+          />
+        </div>
+
+        {/* Category */}
+        <div>
+          <label className="block text-sm font-medium">Category</label>
+          <select
+            name="category"
+            value={form.category}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg"
+          >
+            <option value="">Select</option>
+            <option value="Staff Salary">Staff Salary</option>
+            <option value="Rent">Rent</option>
+            <option value="Food">Food</option>
+            <option value="Inventory">Inventory</option>
+            <option value="Electricity Bill">Electricity Bill</option>
+            <option value="Maintainance">Maintainance</option>
+          </select>
+        </div>
+
+        {/* Product / Service */}
+        <div>
+          <label className="block text-sm font-medium">Product / Service</label>
+          <input
+            type="text"
+            name="service"
+            value={form.service}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg"
+          />
+        </div>
+
+        {/* Vendor Name */}
+        <div>
+          <label className="block text-sm font-medium">Vendor Name</label>
+          <input
+            type="text"
+            name="vendor_name"
+            value={form.vendor_name}
+            onChange={(e) => setForm(prev => ({ ...prev, vendor_name: e.target.value.charAt(0).toUpperCase()+e.target.value.slice(1) }))}
+            className="w-full px-3 py-2 border rounded-lg"
+          />
+        </div>
+
+        {/* Credit */}
         
-        className="w-full px-3 py-1 mb-2 border rounded-lg "
-      />
-      <label className="block text-sm font-medium">Main Head</label>
-      <input
-        type="text"
-        name='main_head'
-        onChange={handleChange}
-        value={form.main_head}
-        
-        className="w-full px-3 py-1 border rounded-lg mb-2"
-      />
 
-      <label className="block text-sm font-medium">Credit</label>
-      <input
-        type="number"
-        name='credit'
-        value={form.credit}
-        onChange={handleChange}
-        className="w-full px-3 py-1 border rounded-lg mb-2"
-      />
+        {/* Debit */}
+        <div>
+          <label className="block text-sm font-medium">Amount</label>
+          <input
+            type="number"
+            name="amount"
+            value={form.amount}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg"
+          />
+        </div>
 
-      <label className="block text-sm font-medium">Debit</label>
-      <input
-        type="number"
-        name='debit'
-        value={form.debit}
-        onChange={handleChange}
-        className="w-full px-3 py-1 border rounded-lg mb-2"
-      />
-        <label className="block text-sm font-medium">Added By</label>
-      <input
-        type="text"
-        name='added_by'
-        value={form.added_by}
-        onChange={handleChange}
-        className="w-full px-3 py-1 border rounded-lg mb-2"
-      />
-     
+        {/* Paid By */}
+        <div>
+          <label className="block text-sm font-medium">Paid By</label>
+          <input
+            type="text"
+            name="paid_by"
+            value={form.paid_by}
+            onChange={(e) => setForm(prev => ({ ...prev, paid_by: e.target.value.charAt(0).toUpperCase()+e.target.value.slice(1) }))}
+            className="w-full px-3 py-2 border rounded-lg"
+          />
+        </div>
 
-      <div className="flex justify-end gap-3">
+        {/* Payment Method */}
+        <div>
+          <label className="block text-sm font-medium">Payment Method</label>
+          <select
+            name="payment_method"
+            value={form.payment_method}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg"
+          >
+            <option value="">Select</option>
+            <option value="Cash">Cash</option>
+            <option value="UPI">UPI</option>
+            <option value="Bank">Bank</option>
+            <option value="Card">Card</option>
+          </select>
+        </div>
+
+        {/* Transaction Type */}
+        <div>
+          <label className="block text-sm font-medium">Transaction Type</label>
+          <select
+            name="transaction_type"
+            value={form.transaction_type}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg"
+          > 
+            <option value="Debit">Debit</option>
+            <option value="Credit">Credit</option>
+          </select>
+        </div>
+
+        {/* Bill Image */}
+        <div>
+          <label className="block text-sm font-medium">Bill Image</label>
+          <input
+            type="file"
+            accept="image/*"
+            name="bill_image"
+            onChange={handleImageSelect}
+            className="w-full border rounded-lg p-2"
+          />
+        </div>
+
+      </div>
+
+      {/* Description - Full Width */}
+      <div>
+        <label className="block text-sm font-medium">Remark</label>
+        <textarea
+          name="Remark"
+          value={form.description}
+          onChange={handleChange}
+          rows={3}
+          className="w-full px-3 py-2 border rounded-lg"
+        />
+      </div>
+
+      {/* Buttons */}
+      <div className="flex justify-end gap-3 pt-4">
         <button
+          type="button"
           onClick={handleSave}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+          className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
         >
-          Save
+          Create
         </button>
+
         <button
-          onClick={() => setEditItem(null)}
-          className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
+          type="button"
+          onClick={() => setAddItem(null)}
+          className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600"
         >
           Cancel
         </button>
       </div>
-        </form>
-    </div>
+    </form>
   </div>
+</div>
+
+
 )}
 
       {editItem && (
-  <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-    <div className="bg-white w-96 p-6 rounded-xl shadow-lg">
-      <h3 className="text-xl font-semibold mb-4">Edit Expense</h3>
-        <form >
-         <label className="block text-sm font-medium">Expense Date</label>
-      <input
-        type="date"
-        name='expense_date'
-        onChange={handleChange}
-        value={form.expense_date}
+  <div className="fixed inset-0 bg-black bg-opacity-40 w-full flex justify-center items-center z-50">
+  <div className="bg-white w-full max-w-5xl p-6 rounded-xl shadow-lg">
+    <h3 className="text-xl font-semibold mb-4">Edit Expense</h3>
+
+    <form className="space-y-4">
+      {/* GRID LAYOUT - 4 COLUMNS */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+        {/* Expense Date */}
+        <div>
+          <label className="block text-sm font-medium">Expense Date</label>
+          <input
+            type="date"
+            name="expense_date"
+            value={form.expense_date}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg"
+          />
+        </div>
+
+        {/* Category */}
+        <div>
+          <label className="block text-sm font-medium">Category</label>
+          <select
+            name="category"
+            value={form.category}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg"
+          >
+            <option value="">Select</option>
+            <option value="Staff Salary">Staff Salary</option>
+            <option value="Rent">Rent</option>
+            <option value="Food">Food</option>
+            <option value="Inventory">Inventory</option>
+            <option value="Electricity Bill">Electricity Bill</option>
+            <option value="Maintainance">Maintainance</option>
+          </select>
+        </div>
+
+        {/* Product / Service */}
+        <div>
+          <label className="block text-sm font-medium">Product / Service</label>
+          <input
+            type="text"
+            name="service"
+            value={form.service}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg"
+          />
+        </div>
+
+        {/* Vendor Name */}
+        <div>
+          <label className="block text-sm font-medium">Vendor Name</label>
+          <input
+            type="text"
+            name="vendor_name"
+            value={form.vendor_name}
+            onChange={(e) => setForm(prev => ({ ...prev, vendor_name: e.target.value.charAt(0).toUpperCase()+e.target.value.slice(1) }))}
+            className="w-full px-3 py-2 border rounded-lg"
+          />
+        </div>
+
+        {/* Credit */}
         
-        className="w-full px-3 py-1 mb-2 border rounded-lg "
-      />
-      <label className="block text-sm font-medium">Main Head</label>
-      <input
-        type="text"
-        name='main_head'
-        onChange={handleChange}
-        value={form.main_head}
-        
-        className="w-full px-3 py-1 border rounded-lg mb-2"
-      />
 
-      <label className="block text-sm font-medium">Credit</label>
-      <input
-        type="number"
-        name='credit'
-        value={form.credit}
-        onChange={handleChange}
-        className="w-full px-3 py-1 border rounded-lg mb-2"
-      />
+        {/* Debit */}
+        <div>
+          <label className="block text-sm font-medium">Amount</label>
+          <input
+            type="number"
+            name="amount"
+            value={form.amount}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg"
+          />
+        </div>
 
-      <label className="block text-sm font-medium">Debit</label>
-      <input
-        type="number"
-        name='debit'
-        value={form.debit}
-        onChange={handleChange}
-        className="w-full px-3 py-1 border rounded-lg mb-2"
-      />
-        <label className="block text-sm font-medium">Added By</label>
-      <input
-        type="text"
-        name='added_by'
-        value={form.added_by}
-        onChange={handleChange}
-        className="w-full px-3 py-1 border rounded-lg mb-2"
-      />
-     
+        {/* Paid By */}
+        <div>
+          <label className="block text-sm font-medium">Paid By</label>
+          <input
+            type="text"
+            name="paid_by"
+            value={form.paid_by}
+            onChange={(e) => setForm(prev => ({ ...prev, paid_by: e.target.value.charAt(0).toUpperCase()+e.target.value.slice(1) }))}
+            className="w-full px-3 py-2 border rounded-lg"
+          />
+        </div>
 
-      <div className="flex justify-end gap-3">
+        {/* Payment Method */}
+        <div>
+          <label className="block text-sm font-medium">Payment Method</label>
+          <select
+            name="payment_method"
+            value={form.payment_method}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg"
+          >
+            <option value="">Select</option>
+            <option value="Cash">Cash</option>
+            <option value="UPI">UPI</option>
+            <option value="Bank">Bank</option>
+            <option value="Card">Card</option>
+          </select>
+        </div>
+
+        {/* Transaction Type */}
+        <div>
+          <label className="block text-sm font-medium">Transaction Type</label>
+          <select
+            name="transaction_type"
+            value={form.transaction_type}
+            onChange={handleChange}
+            className="w-full px-3 py-2 border rounded-lg"
+          > 
+            <option value="Debit">Debit</option>
+            <option value="Credit">Credit</option>
+          </select>
+        </div>
+
+        {/* Bill Image */}
+        <div>
+          <label className="block text-sm font-medium">Bill Image</label>
+          <input
+            type="file"
+            accept="image/*"
+            name="bill_image"
+            onChange={handleImageSelect}
+            className="w-full border rounded-lg p-2"
+          />
+        </div>
+
+      </div>
+
+      {/* Description - Full Width */}
+      <div>
+        <label className="block text-sm font-medium">Remark</label>
+        <textarea
+          name="Remark"
+          value={form.description}
+          onChange={handleChange}
+          rows={3}
+          className="w-full px-3 py-2 border rounded-lg"
+        />
+      </div>
+
+      {/* Buttons */}
+      <div className="flex justify-end gap-3 pt-4">
         <button
+          type="button"
           onClick={()=>handleEditData(editItem.id)}
-          className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700"
+          className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700"
         >
-          Save
+          Edit
         </button>
+
         <button
+          type="button"
           onClick={() => setEditItem(null)}
-          className="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600"
+          className="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600"
         >
           Cancel
         </button>
       </div>
-        </form>
-    </div>
+    </form>
   </div>
+</div>
 )}
 
 {deleteId && (
@@ -467,6 +826,7 @@ useEffect(()=>{
 
       
     </div>
+    </>
   )
 }
 

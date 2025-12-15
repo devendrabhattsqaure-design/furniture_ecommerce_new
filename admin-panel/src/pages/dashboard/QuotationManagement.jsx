@@ -20,11 +20,12 @@ const QuotationManagement = () => {
     
     customer_address: '',
     items: [],
-   gst_amount:"",
-   gst_percentage:"",
-   discount_amount:"",
-   discount_percentage:"",
-   shipping_charges:""
+   gst_amount:'',
+   gst_percentage:'',
+   discount_amount:'',
+   discount_percentage:'',
+   shipping_charges:'',
+   installation_charges:''
 
 })
      const [categoryList, setCategoryList] = useState([]);
@@ -194,6 +195,22 @@ const handleSubmit = async(e)=>{
     }
   };
 
+const   handleCancelModal = ()=>{
+  setFormData({  customer_name: '',
+    customer_phone: '',
+    
+    customer_address: '',
+    items: [],
+   gst_amount:"",
+   gst_percentage:"",
+   discount_amount:"",
+   discount_percentage:"",
+   shipping_charges:"",
+   installation_charges:''
+})
+setShowModal(false)
+}
+
   const handleCategoryChange = (e) => {
     const value = e.target.value;
     setSelectedCategory(value);
@@ -234,13 +251,14 @@ const handleSubmit = async(e)=>{
   // -------------------------------
   // 🔹 Final Total
   // -------------------------------
-  const total = subtotal - discount + tax + Number(formData.shipping_charges)
+
+  const total = subtotal - discount + tax + Number(formData.shipping_charges)+Number(formData.installation_charges)
 // setFormData(prev => ({ ...prev, subtotal:subtotal,discount:discount,tax:tax,total:total }))
   return {
     subtotal: parseFloat(subtotal.toFixed(2)),
     discount: parseFloat(discount.toFixed(2)),
     tax: parseFloat(tax.toFixed(2)),
-    total: parseFloat(total.toFixed(2)),
+    total: Math.ceil(total),
   };
 };
 
@@ -359,7 +377,7 @@ const generatePDF = (item) => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200">
-                        {quotations.map((item) => (
+                        {quotations.reverse().map((item) => (
                           <tr key={item.quotation_id} className="hover:bg-gray-50">
                             <td className="px-4 py-3">
                               <div className="font-medium text-blue-600">{item.quotation_id}</div>
@@ -439,7 +457,7 @@ const generatePDF = (item) => {
                                       <input
                                         type="text"
                                         value={formData.customer_name}
-                                        onChange={(e) => setFormData(prev => ({ ...prev, customer_name: e.target.value }))}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, customer_name: e.target.value.charAt(0).toUpperCase()+e.target.value.slice(1) }))}
                                         className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                         placeholder="Customer name"
                                         required
@@ -452,13 +470,20 @@ const generatePDF = (item) => {
                                           <Phone className="w-3 h-3 inline mr-1" />
                                           Phone
                                         </label>
-                                        <input
-                                          type="tel"
-                                          value={formData.customer_phone}
-                                          onChange={(e) => setFormData(prev => ({ ...prev, customer_phone: e.target.value }))}
-                                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
-                                          placeholder="Phone number"
-                                        />
+                                       <input
+  type="tel"
+  inputMode="numeric"             // Mobile numeric keyboard
+  pattern="\d{10}"
+  maxLength={10}
+  minLength={10}
+  value={formData.customer_phone}
+  onChange={(e) => {
+    const value = e.target.value.replace(/[^0-9]/g, ""); // Remove non-numeric
+    setFormData(prev => ({ ...prev, customer_phone: value }));
+  }}
+  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+  placeholder="Phone number"
+/>
                                       </div>
               
                                       
@@ -671,7 +696,8 @@ const generatePDF = (item) => {
                                       </div>
 
                                     </div>
-                                     <div className='w-[50%]'>
+                                    <div className='grid grid-cols-2 gap-3'> 
+                                      <div className=''>
                                         <label className="block text-xs font-medium text-gray-700 mb-1">
                                           Shipping Charges
                                         </label>
@@ -687,11 +713,28 @@ const generatePDF = (item) => {
                                           placeholder="0"
                                         />
                                       </div>
+                                      <div className=''>
+                                        <label className="block text-xs font-medium text-gray-700 mb-1">
+                                          Installation Charges
+                                        </label>
+                                        <input
+                                          type="number"
+                                          value={formData.installation_charges}
+                                          onChange={(e) => setFormData(prev => ({ 
+                                            ...prev, 
+                                            installation_charges: e.target.value,
+                                             
+                                          }))}
+                                          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                                          placeholder="0"
+                                        />
+                                      </div></div>
+                                    
               
                                     <div className="border-t pt-3">
                                       <div className="flex justify-between font-bold">
-                                        <span>Total:</span>
-                                        <span className="text-green-600">₹{total}</span>
+                                        <span>Grand Total:</span>
+                                        <span className="text-green-600">₹{total.toLocaleString('en-IN')}</span>
                                       </div>
                                     </div>
                                   </div>
@@ -709,7 +752,7 @@ const generatePDF = (item) => {
                                 type="button"
                                 // onClick={closeCreateModal}
                                 // disabled={loading}
-                                onClick={()=>setShowModal(false)}
+                                onClick={handleCancelModal}
                                 className="px-4 py-2 text-sm border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
                               >
                                 Cancel

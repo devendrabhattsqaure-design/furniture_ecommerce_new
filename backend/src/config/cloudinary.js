@@ -48,6 +48,19 @@ const sliderStorage = new CloudinaryStorage({
     transformation: [{ width: 1600, height: 600, crop: 'limit' }],
   },
 });
+const billStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'furniture-store/bill',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'webp'],
+    transformation: [{ width: 1600, height: 600, crop: 'limit' }],
+  },
+});
+
+exports.uploadBill = multer({
+  storage: billStorage,
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB
+});
 
 exports.uploadSlider = multer({
   storage: sliderStorage,

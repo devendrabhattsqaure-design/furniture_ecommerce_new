@@ -4,6 +4,8 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const cookieParser = require('cookie-parser');
 const errorHandler = require('./middlewares/error.middleware');
+const path = require('path'); 
+const fs = require('fs');
 
 const app = express();
 
@@ -12,9 +14,10 @@ app.use(helmet());
 
 // CORS
 app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:5173"],
+  origin: ["http://localhost:3000", "http://localhost:5173", "http://localhost:5000"],
   credentials: true,
-  methods: "GET,POST,PUT,DELETE,OPTIONS,PATCH"
+  methods: "GET,POST,PUT,DELETE,OPTIONS,PATCH",
+  allowedHeaders: "Content-Type,Authorization,x-org-id"
 }));
 
 
@@ -28,7 +31,10 @@ app.use(cookieParser());
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+app.use(express.static(path.join(__dirname, 'public')));
 
+// Or if you want specific route for qrcodes
+app.use('/qrcodes', express.static(path.join(__dirname, 'public/qrcodes')));
 // Routes
 app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/users', require('./routes/user.routes'));
@@ -50,6 +56,7 @@ app.use('/api/enquiry',require('./routes/enquiry.routes'))
 app.use('/api/stocks',require('./routes/stock.routes'))
 app.use('/api/quotation',require('./routes/quotation.routes'))
 app.use('/api/payments',require('./routes/payment.routes'))
+app.use('/api/vendor',require('./routes/vendor.routes'))
 
 app.use('/api/user-targets', require('./routes/target.routes'));
 

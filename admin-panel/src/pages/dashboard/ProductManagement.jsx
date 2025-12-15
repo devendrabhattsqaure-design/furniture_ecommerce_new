@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { CubeIcon, PlusIcon,  } from "@heroicons/react/24/solid";
 import { Plus, Edit2, Trash2, } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 const ProductManagement = () => {
+  const navigate = useNavigate()
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [vendors, setVendors] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -12,37 +15,30 @@ const ProductManagement = () => {
   const [existingImages, setExistingImages] = useState([]);
   const [orgId, setOrgId] = useState(null);
 
- const [formData, setFormData] = useState({
-  product_name: '',
-  slug: '',
-  sku: '',
-  category_id: '',
-  brand: '',
-  description: '',
-  short_description: '',
-  price: '',
-  compare_price: '',
-  cost_price: '',
-  material: '',
-  color: '',
-  dimensions: '',
-  weight: '',
-  stock_quantity: '',
-  low_stock_threshold: '10',
-  
-  // Add these new fields
-  warranty_period: '',        // e.g., "1 year", "2 years"
-  warranty_type: '',          // e.g., "Manufacturer", "Seller", "Extended"
-  guarantee_period: '',       // e.g., "6 months", "1 year"
-  warranty_details: '',       // Detailed warranty information
-  guarantee_details: '',      // Detailed guarantee information
-  
-  is_featured: false,
-  is_bestseller: false,
-  is_new_arrival: false,
-  is_on_sale: false,
-  is_active: true
-});
+  const [formData, setFormData] = useState({
+    vendor_id:'',
+    product_name: '',
+    slug: '',
+    sku: '',
+    category_id: '',
+    brand: '',
+    description: '',
+    short_description: '',
+    price: '',
+    compare_price: '',
+    cost_price: '',
+    material: '',
+    color: '',
+    dimensions: '',
+    weight: '',
+    stock_quantity: '',
+    low_stock_threshold: '10',
+    is_featured: false,
+    is_bestseller: false,
+    is_new_arrival: false,
+    is_on_sale: false,
+    is_active: true
+  });
 
  
  useEffect(() => {
@@ -56,6 +52,7 @@ const ProductManagement = () => {
     setOrgId(orgId);
     fetchProducts(orgId)
     fetchCategories(orgId);
+    getVendor(orgId)
   }
 }, []);
 
@@ -119,7 +116,7 @@ const ProductManagement = () => {
       Object.keys(formData).forEach(key => {
         formDataToSend.append(key, formData[key]);
       });
-
+console.log(formDataToSend)
       // Append images
       images.forEach(image => {
         formDataToSend.append('images', image);
@@ -223,100 +220,86 @@ const ProductManagement = () => {
   };
 
   
-const handleEdit = async (product) => {
-  try {
-    // Fetch the complete product data with images
-    const response = await fetch(`http://localhost:5000/api/products/${product.product_id}`);
-    const result = await response.json();
-    
-    if (result.success) {
-      const productData = result.data;
+ const handleEdit = async (product) => {
+    try {
+      // Fetch the complete product data with images
+      const response = await fetch(`http://localhost:5000/api/products/${product.product_id}`);
+      const result = await response.json();
       
-      setEditingProduct(productData);
-      setFormData({
-        product_name: productData.product_name || '',
-        slug: productData.slug || '',
-        sku: productData.sku || '',
-        category_id: productData.category_id || '',
-        brand: productData.brand || '',
-        description: productData.description || '',
-        short_description: productData.short_description || '',
-        price: productData.price || '',
-        compare_price: productData.compare_price || '',
-        cost_price: productData.cost_price || '',
-        material: productData.material || '',
-        color: productData.color || '',
-        dimensions: productData.dimensions || '',
-        weight: productData.weight || '',
-        stock_quantity: productData.stock_quantity || '',
-        low_stock_threshold: productData.low_stock_threshold || '10',
+      if (result.success) {
+        const productData = result.data;
         
-        // Add these new fields
-        warranty_period: productData.warranty_period || '',
-        warranty_type: productData.warranty_type || '',
-        guarantee_period: productData.guarantee_period || '',
-        warranty_details: productData.warranty_details || '',
-        guarantee_details: productData.guarantee_details || '',
+        setEditingProduct(productData);
+        setFormData({
+          
+          product_name: productData.product_name || '',
+          slug: productData.slug || '',
+          sku: productData.sku || '',
+          category_id: productData.category_id || '',
+          brand: productData.brand || '',
+          description: productData.description || '',
+          short_description: productData.short_description || '',
+          price: productData.price || '',
+          compare_price: productData.compare_price || '',
+          cost_price: productData.cost_price || '',
+          material: productData.material || '',
+          color: productData.color || '',
+          dimensions: productData.dimensions || '',
+          weight: productData.weight || '',
+          stock_quantity: productData.stock_quantity || '',
+          low_stock_threshold: productData.low_stock_threshold || '10',
+          // Ensure boolean fields are properly set from existing data
+          is_featured: Boolean(productData.is_featured),
+          is_bestseller: Boolean(productData.is_bestseller),
+          is_new_arrival: Boolean(productData.is_new_arrival),
+          is_on_sale: Boolean(productData.is_on_sale),
+          is_active: productData.is_active !== undefined ? Boolean(productData.is_active) : true
+        });
         
-        // Ensure boolean fields are properly set from existing data
-        is_featured: Boolean(productData.is_featured),
-        is_bestseller: Boolean(productData.is_bestseller),
-        is_new_arrival: Boolean(productData.is_new_arrival),
-        is_on_sale: Boolean(productData.is_on_sale),
-        is_active: productData.is_active !== undefined ? Boolean(productData.is_active) : true
-      });
-      
-      // Set existing images
-      setExistingImages(productData.images || []);
-      setImages([]);
-      setImagePreviews([]);
-      setShowModal(true);
-    } else {
-      alert('Failed to fetch product details');
+        // Set existing images
+        setExistingImages(productData.images || []);
+        setImages([]);
+        setImagePreviews([]);
+        setShowModal(true);
+      } else {
+        alert('Failed to fetch product details');
+      }
+    } catch (error) {
+      console.error('Error fetching product details:', error);
+      alert('Error fetching product details');
     }
-  } catch (error) {
-    console.error('Error fetching product details:', error);
-    alert('Error fetching product details');
-  }
-};
- const openCreateModal = () => {
-  setEditingProduct(null);
-  setFormData({
-    product_name: '',
-    slug: '',
-    sku: '',
-    category_id: '',
-    brand: '',
-    description: '',
-    short_description: '',
-    price: '',
-    compare_price: '',
-    cost_price: '',
-    material: '',
-    color: '',
-    dimensions: '',
-    weight: '',
-    stock_quantity: '',
-    low_stock_threshold: '10',
-    
-    // Add these new fields
-    warranty_period: '',
-    warranty_type: '',
-    guarantee_period: '',
-    warranty_details: '',
-    guarantee_details: '',
-    
-    is_featured: false,
-    is_bestseller: false,
-    is_new_arrival: false,
-    is_on_sale: false,
-    is_active: true
-  });
-  setImages([]);
-  setImagePreviews([]);
-  setExistingImages([]);
-  setShowModal(true);
-};
+  };
+  const openCreateModal = () => {
+    setEditingProduct(null);
+    setFormData({
+      vendor_id:'',
+      product_name: '',
+      slug: '',
+      sku: '',
+      category_id: '',
+      brand: '',
+      description: '',
+      short_description: '',
+      price: '',
+      compare_price: '',
+      cost_price: '',
+      material: '',
+      color: '',
+      dimensions: '',
+      weight: '',
+      stock_quantity: '',
+      low_stock_threshold: '10',
+      is_featured: false,
+      is_bestseller: false,
+      is_new_arrival: false,
+      is_on_sale: false,
+      is_active: true
+    });
+    setImages([]);
+    setImagePreviews([]);
+    setExistingImages([]);
+    setShowModal(true);
+  };
 
   const handleDelete = async (productId) => {
   if (!window.confirm('Are you sure you want to delete this product?')) {
@@ -342,6 +325,16 @@ const handleEdit = async (product) => {
     alert('Error deleting product');
   }
 };
+
+
+
+
+  const getVendor = async(orgId)=>{
+    let res = await fetch(`http://localhost:5000/api/vendor/${orgId}`)
+    let data = await res.json()
+    console.log(data)
+    setVendors(data.vendors)
+  }
 
   return (
     <div className="mt-12">
@@ -378,99 +371,89 @@ const handleEdit = async (product) => {
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
-  <tr>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      Product
-    </th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      Category
-    </th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      Price
-    </th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      Stock
-    </th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      Warranty
-    </th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      Status
-    </th>
-    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-      Actions
-    </th>
-  </tr>
-</thead>
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Product
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Category
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Price
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Stock
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-  {products.map((product) => (
-    <tr key={product.product_id}>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="flex items-center">
-          {product.images && product.images[0] && (
-            <img 
-              src={product.images[0].image_url} 
-              alt={product.product_name}
-              className="w-10 h-10 rounded object-cover"
-            />
-          )}
-          <div className="ml-4">
-            <div className="text-sm font-medium text-gray-900">
-              {product.product_name}
-            </div>
-            <div className="text-sm text-gray-500">{product.sku}</div>
-          </div>
-        </div>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        {product.category_name}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-        ${product.price}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-        {product.stock_quantity}
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <div className="text-sm text-gray-900">
-          {product.warranty_period || 'No Warranty'}
-        </div>
-        <div className="text-xs text-gray-500">
-          {product.guarantee_period && `Guarantee: ${product.guarantee_period}`}
-        </div>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap">
-        <span
-          className={`inline-flex px-2 text-xs font-semibold leading-5 rounded-full ${
-            product.is_active
-              ? 'bg-green-100 text-green-800'
-              : 'bg-red-100 text-red-800'
-          }`}
-        >
-          {product.is_active ? 'Active' : 'Inactive'}
-        </span>
-      </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => handleEdit(product)}
-            className="text-blue-600 hover:text-blue-900 transition-colors p-2 rounded-lg hover:bg-blue-50"
-            title="Edit"
-          >
-            <Edit2 size={18} />
-          </button>
-          <button
-            onClick={() => handleDelete(product.product_id)}
-            className="text-red-600 hover:text-red-900 transition-colors p-2 rounded-lg hover:bg-red-50"
-            title="Delete"
-          >
-            <Trash2 size={18} />
-          </button>
-        </div>
-      </td>
-    </tr>
-  ))}
-</tbody>
+              {products.map((product) => (
+                <tr onClick={()=>{navigate(`/dashboard/product-management/${product.product_id}`)}} key={product.product_id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      {product.images && product.images[0] && (
+                        <img 
+                          src={product.images[0].image_url} 
+                          alt={product.product_name}
+                          className="w-10 h-10 rounded object-cover"
+                        />
+                      )}
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {product.product_name}
+                        </div>
+                        <div className="text-sm text-gray-500">{product.sku}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {product.category_name}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    ${product.price}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {product.stock_quantity}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`inline-flex px-2 text-xs font-semibold leading-5 rounded-full ${
+                        product.is_active
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}
+                    >
+                      {product.is_active ? 'Active' : 'Inactive'}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div className="flex items-center gap-3">
+                                          <button
+                                            onClick={() => handleEdit(product)}
+                                            className="text-blue-600 hover:text-blue-900 transition-colors p-2 rounded-lg hover:bg-blue-50"
+                                            title="Edit"
+                                          >
+                                            <Edit2 size={18} />
+                                          </button>
+                                          <button
+                                            onClick={() => handleDelete(product.product_id)}
+                                            className="text-red-600 hover:text-red-900 transition-colors p-2 rounded-lg hover:bg-red-50"
+                                            title="Delete"
+                                          >
+                                            <Trash2 size={18} />
+                                          </button>
+                                        </div>
+                                      </td>
+                  
+                </tr>
+              ))}
+            </tbody>
           </table>
         </div>
       </div>
@@ -485,6 +468,49 @@ const handleEdit = async (product) => {
               </h2>
 
               <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+
+         <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Vendor *
+                  </label>
+                  <select
+                    name="vendor_id"
+                    value={formData.vendor_id}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select Vendor</option>
+                    {vendors?.map((vendor) => (
+                      <option key={vendor.vendor_id} value={vendor.vendor_id}>
+                        {vendor.vendor_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+
+                 <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Category *
+                  </label>
+                  <select
+                    name="category_id"
+                    value={formData.category_id}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="">Select Category</option>
+                    {categories.map((category) => (
+                      <option key={category.category_id} value={category.category_id}>
+                        {category.category_name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 {/* Product Name */}
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -531,26 +557,7 @@ const handleEdit = async (product) => {
                 </div>
 
                 {/* Category */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Category *
-                  </label>
-                  <select
-                    name="category_id"
-                    value={formData.category_id}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select Category</option>
-                    {categories.map((category) => (
-                      <option key={category.category_id} value={category.category_id}>
-                        {category.category_name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
+               
                 {/* Brand */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -597,85 +604,19 @@ const handleEdit = async (product) => {
                 </div>
 
                 {/* Stock Quantity */}
-                {/* Stock Quantity */}
-<div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">
-    Stock Quantity *
-  </label>
-  <input
-    type="number"
-    name="stock_quantity"
-    value={formData.stock_quantity}
-    onChange={handleInputChange}
-    required
-    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-  />
-</div>
-
-{/* Warranty Period */}
-<div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">
-    Warranty Period
-  </label>
-  <select
-    name="warranty_period"
-    value={formData.warranty_period}
-    onChange={handleInputChange}
-    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-  >
-    <option value="">Select Warranty Period</option>
-    <option value="No Warranty">No Warranty</option>
-    <option value="3 months">3 Months</option>
-    <option value="6 months">6 Months</option>
-    <option value="1 year">1 Year</option>
-    <option value="2 years">2 Years</option>
-    <option value="3 years">3 Years</option>
-    <option value="5 years">5 Years</option>
-    <option value="Lifetime">Lifetime Warranty</option>
-  </select>
-</div>
-
-{/* Warranty Type */}
-<div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">
-    Warranty Type
-  </label>
-  <select
-    name="warranty_type"
-    value={formData.warranty_type}
-    onChange={handleInputChange}
-    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-  >
-    <option value="">Select Warranty Type</option>
-    <option value="Manufacturer">Manufacturer Warranty</option>
-    <option value="Seller">Seller Warranty</option>
-    <option value="Extended">Extended Warranty</option>
-    <option value="International">International Warranty</option>
-    <option value="Limited">Limited Warranty</option>
-  </select>
-</div>
-
-{/* Guarantee Period */}
-<div>
-  <label className="block text-sm font-medium text-gray-700 mb-1">
-    Guarantee Period
-  </label>
-  <select
-    name="guarantee_period"
-    value={formData.guarantee_period}
-    onChange={handleInputChange}
-    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-  >
-    <option value="">Select Guarantee Period</option>
-    <option value="No Guarantee">No Guarantee</option>
-    <option value="15 days">15 Days</option>
-    <option value="30 days">30 Days</option>
-    <option value="3 months">3 Months</option>
-    <option value="6 months">6 Months</option>
-    <option value="1 year">1 Year</option>
-    <option value="Money Back">Money Back Guarantee</option>
-  </select>
-</div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Stock Quantity *
+                  </label>
+                  <input
+                    type="number"
+                    name="stock_quantity"
+                    value={formData.stock_quantity}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
 
                 {/* Material */}
                 <div>
@@ -787,49 +728,19 @@ const handleEdit = async (product) => {
                   />
                 </div>
 
-               {/* Description */}
-<div className="md:col-span-2">
-  <label className="block text-sm font-medium text-gray-700 mb-1">
-    Description
-  </label>
-  <textarea
-    name="description"
-    value={formData.description}
-    onChange={handleInputChange}
-    rows="4"
-    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-  />
-</div>
-
-{/* Warranty Details */}
-<div className="md:col-span-2">
-  <label className="block text-sm font-medium text-gray-700 mb-1">
-    Warranty Details
-  </label>
-  <textarea
-    name="warranty_details"
-    value={formData.warranty_details}
-    onChange={handleInputChange}
-    rows="2"
-    placeholder="Enter detailed warranty information, terms and conditions"
-    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-  />
-</div>
-
-{/* Guarantee Details */}
-<div className="md:col-span-2">
-  <label className="block text-sm font-medium text-gray-700 mb-1">
-    Guarantee Details
-  </label>
-  <textarea
-    name="guarantee_details"
-    value={formData.guarantee_details}
-    onChange={handleInputChange}
-    rows="2"
-    placeholder="Enter detailed guarantee information, terms and conditions"
-    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-  />
-</div>
+                {/* Description */}
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    name="description"
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    rows="4"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
 
                 {/* Checkboxes */}
                 <div className="md:col-span-2 grid grid-cols-2 gap-4">

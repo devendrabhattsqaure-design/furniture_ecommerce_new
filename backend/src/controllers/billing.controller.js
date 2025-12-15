@@ -1,10 +1,49 @@
 const db = require('../config/database');
 const asyncHandler = require('express-async-handler');
+const QRCode = require('qrcode');
+const path = require('path');
+const fs = require('fs');
 
 // Helper to get organization ID
 const getOrgId = (req) => {
   return req.user?.org_id || req.headers['x-org-id'] || null;
 };
+
+const generateQRCode = async (billId, orgId, billNumber) => {
+  try {
+    // Create QR data
+    const qrData = {
+      billId,
+      billNumber, 
+      orgId,
+      timestamp: new Date().toISOString(),
+      verifyUrl: `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-bill/${billId}`,
+      downloadUrl: `${process.env.BACKEND_URL || 'http://localhost:5000'}/api/bills/${billId}/download`
+    };
+    
+    const qrString = JSON.stringify(qrData);
+    
+    
+    const qrCodeDataURL = await QRCode.toDataURL(qrString, {
+      width: 400,
+      margin: 2,
+      color: {
+        dark: '#000000',
+        light: '#FFFFFF'
+      }
+    });
+    
+    // Store the full data URL in database
+    return qrCodeDataURL; // This is the base64 string
+    
+  } catch (error) {
+    console.error('Error generating QR code:', error);
+    return null;
+  }
+};
+
+
+
 
 // Update the createBill function
 exports.createBill = asyncHandler(async (req, res) => {
@@ -214,6 +253,15 @@ exports.createBill = asyncHandler(async (req, res) => {
     );
 
     const billId = billResult.insertId;
+     // Generate QR code
+    const qrCodePath = await generateQRCode(billId, orgId, billNumber);
+    // Update bill with QR code path
+    if (qrCodeDataURL) {
+  await connection.query(
+    'UPDATE bills SET qr_code = ? WHERE bill_id = ?',
+    [qrCodeDataURL, billId] // Store base64 directly
+  );
+}
 
     // Create bill items
     for (const item of items) {
@@ -267,7 +315,8 @@ exports.createBill = asyncHandler(async (req, res) => {
 
     const billData = {
       ...bills[0],
-      items: billItems
+      items: billItems,
+      qr_code_url: qrCodePath ? `${process.env.BACKEND_URL || 'http://localhost:5000'}${qrCodePath}` : null
     };
 
     res.status(201).json({
@@ -288,19 +337,12 @@ exports.createBill = asyncHandler(async (req, res) => {
   }
 });
 
-// Update getBill function to include new fields
-exports.getBill = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const orgId = getOrgId(req);
-
-  if (!orgId) {
-    return res.status(400).json({
-      success: false,
-      message: 'Organization ID is required'
-    });
-  }
-
-  const [bills] = await db.query(`
+exports.verifyBillFromQR = asyncHandler(async (req, res) => {
+  const { id } = req.params; // Changed from billId to id to match route
+  
+  console.log('Verifying bill ID:', id); // Debug log
+  
+  const query = `
     SELECT 
       b.*, 
       u.full_name as created_by_name,
@@ -316,8 +358,70 @@ exports.getBill = asyncHandler(async (req, res) => {
     FROM bills b
     LEFT JOIN users u ON b.created_by = u.user_id
     LEFT JOIN organizations o ON b.org_id = o.org_id
-    WHERE b.bill_id = ? AND b.org_id = ?
-  `, [id, orgId]);
+    WHERE b.bill_id = ?
+  `;
+  
+  const [bills] = await db.query(query, [id]);
+
+  if (bills.length === 0) {
+    return res.status(404).json({ 
+      success: false, 
+      message: 'Bill not found' 
+    });
+  }
+
+  const [items] = await db.query(`
+    SELECT bi.*, p.product_name, p.sku, p.description
+    FROM bill_items bi
+    LEFT JOIN products p ON bi.product_id = p.product_id
+    WHERE bi.bill_id = ?
+  `, [id]);
+
+  const billData = {
+    ...bills[0],
+    items,
+    // Include QR URL if exists
+    qr_code_url: bills[0].qr_code_path ? 
+      `${req.protocol}://${req.get('host')}${bills[0].qr_code_path}` : 
+      null
+  };
+
+  res.json({
+    success: true,
+    data: billData
+  });
+});
+// Update getBill function to include new fields
+exports.getBill = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const orgId = getOrgId(req);
+
+  if (!orgId) {
+    return res.status(400).json({
+      success: false,
+      message: 'Organization ID is required'
+    });
+  }
+
+
+const [bills] = await db.query(`
+  SELECT 
+    b.*, 
+    u.full_name as created_by_name,
+    o.org_name,
+    o.org_logo,
+    o.gst_number,
+    o.gst_type as org_gst_type,
+    o.gst_percentage,
+    o.address as org_address,
+    o.contact_person_name,
+    o.primary_phone,
+    o.secondary_phone
+  FROM bills b
+  LEFT JOIN users u ON b.created_by = u.user_id
+  LEFT JOIN organizations o ON b.org_id = o.org_id
+  WHERE b.bill_id = ? AND b.org_id = ?
+`, [id, orgId]);
 
   if (bills.length === 0) {
     return res.status(404).json({
@@ -333,10 +437,14 @@ exports.getBill = asyncHandler(async (req, res) => {
     WHERE bi.bill_id = ? AND bi.org_id = ?
   `, [id, orgId]);
 
-  const billData = {
-    ...bills[0],
-    items
-  };
+const billData = {
+  ...bills[0],
+  items,
+  // Update this line to use the correct URL
+  qr_code_url: bills[0].qr_code_path ? 
+    `${req.protocol}://${req.get('host')}${bills[0].qr_code_path}` : 
+    null
+};
 
   res.json({
     success: true,

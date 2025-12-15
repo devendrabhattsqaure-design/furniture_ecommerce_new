@@ -28,6 +28,7 @@ import { SignIn, SignUp } from "@/pages/auth";
 
 // Import all management components
 import UserManagement from "@/pages/dashboard/UserManagement";
+
 import OrganizationManagement from "@/pages/dashboard/OrganizationManagement";
 import BillingManagement from "@/pages/dashboard/BillingManagement/index.jsx";
 import BillCreate from "@/pages/dashboard/BillingManagement/BillCreate";
@@ -44,6 +45,11 @@ import EnquiryManagement from "./pages/dashboard/EnquiryManagement";
 import ExpenseManagement from "./pages/dashboard/ExpenseManagement";
 import StockManagement from "./pages/dashboard/StockManagement";
 import QuotationManagement from "./pages/dashboard/QuotationManagement";
+import VendorManagement from "./pages/dashboard/VendorManagement";
+
+import VendorViewPage from "./pages/dashboard/VendorViewPage";
+import ProductViewPage from "./pages/dashboard/ProductViewPage";
+
 
 const icon = {
   className: "w-5 h-5 text-inherit",
@@ -98,6 +104,14 @@ export const getRoutes = (user) => {
       show: true,
       category: "direct", // Changed from reports to direct
     },
+    vendor: {
+      icon: <ReceiptPercentIcon {...icon} />,
+      name: "vendor",
+      path: "/vendor",
+      element: <VendorManagement />,
+      show: true,
+      category: "direct", // Changed from reports to direct
+    },
     
     quotation: {
      icon: <DocumentTextIcon {...icon} />,
@@ -107,6 +121,7 @@ export const getRoutes = (user) => {
       show: true,
       category: "direct", // Changed from reports to direct
     },
+    
     
     // profile: {
     //   icon: <UserCircleIcon {...icon} />,
@@ -247,12 +262,25 @@ export const hiddenRoutes = [
     element: <BillView />,
     hideFromSidebar: true,
   },
+
   {
     icon: <EyeIcon {...icon} />,
     name: "user details",
     path: "/users/:userId", 
     element: <UserDetailsPage />,
     hideFromSidebar: true,
+  },
+  {
+    icon: <InformationCircleIcon {...icon} />,
+    name: "vendorpage",
+    path: "/vendor/:id",
+    element: <VendorViewPage />,
+  },
+   {
+    icon: <InformationCircleIcon {...icon} />,
+    name: "productviewpage",
+    path: "/product-management/:id",
+    element: <ProductViewPage />,
   },
 ];
 

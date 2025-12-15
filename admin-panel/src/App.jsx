@@ -5,6 +5,7 @@ import { Dashboard, Auth } from "@/layouts";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { MaterialTailwindControllerProvider } from "@/context";
 import { ThemeProvider } from "@material-tailwind/react";
+import VerifyBill from "../src/pages/dashboard/BillingManagement/components/VerifyBill"; 
 
 // Protected Route component
 const ProtectedRoute = ({ children }) => {
@@ -39,6 +40,20 @@ const PublicRoute = ({ children }) => {
 function AppContent() {
   return (
     <Routes>
+      {/* ✅ PUBLIC ROUTES FIRST (no authentication required) */}
+      <Route path="/verify-bill/:billId" element={<VerifyBill />} />
+      <Route path="/verify/:billId" element={<VerifyBill />} />
+      
+      {/* Auth Routes - Public (only when not logged in) */}
+      <Route 
+        path="/auth/*" 
+        element={
+          <PublicRoute>
+            <Auth />
+          </PublicRoute>
+        } 
+      />
+      
       {/* Dashboard Routes - Protected */}
       <Route 
         path="/dashboard/*" 
@@ -49,17 +64,7 @@ function AppContent() {
         } 
       />
       
-      {/* Auth Routes - Public */}
-      <Route 
-        path="/auth/*" 
-        element={
-          <PublicRoute>
-            <Auth />
-          </PublicRoute>
-        } 
-      />
-      
-      {/* Default Routes */}
+      {/* Default Routes - Keep these at the END */}
       <Route path="/" element={<Navigate to="/dashboard/home" replace />} />
       <Route path="*" element={<Navigate to="/dashboard/home" replace />} />
     </Routes>
