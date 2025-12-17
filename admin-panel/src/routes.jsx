@@ -46,7 +46,6 @@ import ExpenseManagement from "./pages/dashboard/ExpenseManagement";
 import StockManagement from "./pages/dashboard/StockManagement";
 import QuotationManagement from "./pages/dashboard/QuotationManagement";
 import VendorManagement from "./pages/dashboard/VendorManagement";
-
 import VendorViewPage from "./pages/dashboard/VendorViewPage";
 import ProductViewPage from "./pages/dashboard/ProductViewPage";
 
@@ -122,30 +121,7 @@ export const getRoutes = (user) => {
       category: "direct", // Changed from reports to direct
     },
     
-    
-    // profile: {
-    //   icon: <UserCircleIcon {...icon} />,
-    //   name: "profile",
-    //   path: "/profile",
-    //   element: <Profile />,
-    //   show: true,
-    //   category: "direct",
-    // },
-    
-   
-    
-    
-    
-   
-    
-    // tables: {
-    //   icon: <TableCellsIcon {...icon} />,
-    //   name: "tables",
-    //   path: "/tables",
-    //   element: <Tables />,
-    //   show: ['admin', 'manager', 'super_admin'].includes(userRole),
-    //   category: "direct", 
-    // },
+
     
     // Super Admin ONLY pages (direct links)
     organizationManagement: {

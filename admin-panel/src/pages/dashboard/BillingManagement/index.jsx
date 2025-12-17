@@ -116,12 +116,19 @@ const BillingManagement = () => {
   );
 
   const stats = {
-    totalBills: bills.length,
-    totalRevenue: bills.reduce((sum, bill) => sum + parseFloat(bill.total_amount), 0),
-    totalPaid: bills.reduce((sum, bill) => sum + parseFloat(bill.paid_amount || 0), 0),
-    totalDue: bills.reduce((sum, bill) => sum + parseFloat(bill.due_amount || 0), 0),
-    totalItems: bills.reduce((sum, bill) => sum + parseInt(bill.total_quantity || 0), 0)
-  };
+  totalBills: bills.length,
+  totalRevenue: Math.floor(
+    bills.reduce((sum, bill) => sum + Number(bill.total_amount || 0), 0)
+  ),
+  totalPaid: Math.floor(
+    bills.reduce((sum, bill) => sum + Number(bill.paid_amount || 0), 0)
+  ),
+  totalDue: Math.floor(
+    bills.reduce((sum, bill) => sum + Number(bill.due_amount || 0), 0)
+  ),
+  totalItems: bills.reduce((sum, bill) => sum + Number(bill.total_quantity || 0), 0)
+};
+
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -313,13 +320,13 @@ const BillingManagement = () => {
                       {new Date(bill.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-4 py-3 font-medium text-gray-900">
-                      ₹{parseFloat(bill.total_amount).toLocaleString('en-IN')}
+                      ₹{Math.floor(bill.total_amount).toLocaleString('en-IN')}
                     </td>
                     <td className="px-4 py-3 text-green-600 font-medium">
-                      ₹{parseFloat(bill.paid_amount || 0).toLocaleString('en-IN')}
+                      ₹{Math.floor(bill.paid_amount || 0).toLocaleString('en-IN')}
                     </td>
                     <td className="px-4 py-3 text-red-600 font-medium">
-                      ₹{parseFloat(bill.due_amount || 0).toLocaleString('en-IN')}
+                      ₹{Math.floor(bill.due_amount || 0).toLocaleString('en-IN')}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${

@@ -4,8 +4,6 @@ const QRCode = require('qrcode')
 const bwipjs = require('bwip-js')
 
 
-
-// Add this to your product.controller.js
 exports.uploadProductImages = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
@@ -42,8 +40,7 @@ exports.uploadProductImages = asyncHandler(async (req, res) => {
     }
   });
 });
-// @desc    Get single product
-// @route   GET /api/products/:id
+ 
 exports.getProduct = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
@@ -228,7 +225,7 @@ exports.updateProduct = asyncHandler(async (req, res) => {
     product_name, slug, sku, category_id, brand, description,
     short_description, price, compare_price, cost_price, material,
     color, dimensions, weight, stock_quantity, low_stock_threshold,
-    is_featured, is_bestseller, is_new_arrival, is_on_sale, is_active
+    is_featured, is_bestseller, is_new_arrival, is_on_sale, is_active , purchase_price
   } = updateData;
 
   console.log('Update data received:', {
@@ -248,14 +245,14 @@ exports.updateProduct = asyncHandler(async (req, res) => {
     `UPDATE products SET 
       product_name = ?, slug = ?, sku = ?, category_id = ?, brand = ?, 
       description = ?, short_description = ?, price = ?, compare_price = ?, 
-      cost_price = ?, material = ?, color = ?, dimensions = ?, weight = ?, 
+      cost_price = ?,purchase_price = ?, material = ?, color = ?, dimensions = ?, weight = ?, 
       stock_quantity = ?, low_stock_threshold = ?, is_featured = ?, 
       is_bestseller = ?, is_new_arrival = ?, is_on_sale = ?, is_active = ?,
       updated_at = NOW()
     WHERE product_id = ?`,
     [
       product_name, slug, sku, category_id, brand, description,
-      short_description, price, compare_price, cost_price, material,
+      short_description, price, compare_price, cost_price,purchase_price, material,
       color, dimensions, weight, stock_quantity, low_stock_threshold,
       is_featured,
       is_bestseller,
@@ -336,7 +333,7 @@ exports.createProduct = asyncHandler(async (req, res) => {
     product_name, slug, sku, category_id, brand, description,
     short_description, price, compare_price, cost_price, material,
     color, dimensions, weight, stock_quantity, low_stock_threshold,
-    is_featured, is_bestseller, is_new_arrival, is_on_sale,vendor_id
+    is_featured, is_bestseller, is_new_arrival, is_on_sale,vendor_id ,  purchase_price
   } = productData;
 
   // Check if category belongs to same organization
@@ -367,8 +364,8 @@ exports.createProduct = asyncHandler(async (req, res) => {
       product_name, slug, sku, category_id, brand, description, 
       short_description, price, compare_price, cost_price, material, 
       color, dimensions, weight, stock_quantity, low_stock_threshold,
-      is_featured, is_bestseller, is_new_arrival, is_on_sale, org_id,vendor_id
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)`,
+      is_featured, is_bestseller, is_new_arrival, is_on_sale,purchase_price, org_id,vendor_id
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?)`,
     [
       product_name, slug, sku, category_id, brand, description, 
       short_description, price, compare_price, cost_price, material, 
@@ -377,6 +374,7 @@ exports.createProduct = asyncHandler(async (req, res) => {
       is_bestseller === 'true' || is_bestseller === true,
       is_new_arrival === 'true' || is_new_arrival === true,
       is_on_sale === 'true' || is_on_sale === true,
+      purchase_price || null,
       orgId,vendor_id
     ]
   );
@@ -416,11 +414,11 @@ exports.createProduct = asyncHandler(async (req, res) => {
     [qrCode, barcodeBase64, productId]
   );
 
-  
+  let due = price*stock_quantity
   await db.query(`INSERT INTO vendors_items (
-    vendor_id,product_name,sku,product_quantity,product_price
-    ) VALUES (?,?,?,?,?)`,[
-      vendor_id,product_name,sku,stock_quantity,price
+    vendor_id,product_name,sku,product_quantity,product_price,product_due
+    ) VALUES (?,?,?,?,?,?)`,[
+      vendor_id,product_name,sku,stock_quantity,price,due
     ])
 
   // Upload images if provided

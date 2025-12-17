@@ -1,5 +1,5 @@
 const express =require("express")
-const { createExpense, getExpenses, editExpense, deleteExpense, filterExpense } = require("../controllers/expense.controller")
+const { createExpense, getExpenses, editExpense, deleteExpense, filterExpense, getVendorExpenses } = require("../controllers/expense.controller")
 const { uploadBill } = require("../config/cloudinary")
 const router = express.Router()
 
@@ -8,5 +8,6 @@ router.get("/:orgId",getExpenses)
 router.put('/edit/:id',uploadBill.single('bill_image'),editExpense)
 router.delete('/delete/:id',deleteExpense)
 router.get('/filter-expense/:orgId',filterExpense)
+router.get('/get-vendor/:id',getVendorExpenses)
 
 module.exports=router

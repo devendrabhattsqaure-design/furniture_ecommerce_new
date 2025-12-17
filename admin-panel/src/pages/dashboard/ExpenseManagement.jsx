@@ -16,16 +16,19 @@ const ExpenseManagement = () => {
     const [monthTotal, setMonthTotal] = useState(0);
     const [filter, setFilter] = useState();
     const [searchTerm, setSearchTerm] = useState('');
+    const [vendorSelect, setVendorSelect] = useState([]);
+    const [vendorItems, setVendorItems] = useState([]);
 
   // Delete Confirmation
   const [deleteId, setDeleteId] = useState(null);
   const [orgId, setOrgId] = useState(JSON.parse(localStorage.getItem('user')).org_id);
   const [form, setForm] = useState({
      expense_date: "",
-      vendor_name :"",
+      vendor_id :"",
       amount: "",
       paid_by:"",
       category:"",
+      vendor_item:"",
       service:"",
       payment_method:"",
       transaction_type:"",
@@ -35,21 +38,30 @@ const ExpenseManagement = () => {
 
     });
 
+  const fetchVendors = async()=>{
+    let res = await fetch(`http://localhost:5000/api/vendor/${orgId}`)
+    let data = await res.json()
+    console.log(data.vendors)
+    setVendorSelect(data.vendors)
+
+  }
+
   const handleChange = (e) => {
+    // console.log(e.target.value)
     setForm({ ...form, [e.target.name]: e.target.value });
+    
   };
   
    const handleSave = async() => {
-    // console.log(form)
-    // if (form.bill_image) {
-    //     submitData.append('image_url', formData.image_url);
-    //   }
+    
 
     const submitData = new FormData();
      submitData.append('expense_date', form.expense_date);
      submitData.append('category', form.category);
      submitData.append('service', form.service);
-     submitData.append('vendor_name', form.vendor_name);
+     submitData.append('vendor_id', form.vendor_id);
+     submitData.append('vendor_item', form.vendor_item);
+
      submitData.append('paid_by', form.paid_by);
      submitData.append('amount', form.amount);
      submitData.append('payment_method', form.payment_method);
@@ -59,6 +71,7 @@ const ExpenseManagement = () => {
       if (form.bill_image) {
         submitData.append('bill_image', form.bill_image);
       }
+      console.log(submitData  )
      try {
       const res = await fetch(`http://localhost:5000/api/expenses/create-expense/${orgId}`, {
         method: "POST",
@@ -72,11 +85,12 @@ const ExpenseManagement = () => {
         toast.success("Expense added successfully")
         fetchExpenses(); // refresh list
         setAddItem(false);
+        setVendorSelect(null)
         setForm({  expense_date: "",
-      vendor_name :"",
+      vendor_id :"",
       amount: "",
       org_id:"",
-     
+     vendor_item:"",
       paid_by:"",
       category:"",
       service:"",
@@ -98,7 +112,8 @@ const ExpenseManagement = () => {
      submitData.append('expense_date', form.expense_date);
      submitData.append('category', form.category);
      submitData.append('service', form.service);
-     submitData.append('vendor_name', form.vendor_name);
+     submitData.append('vendor_id', form.vendor_id);
+     submitData.append('vendor_item', form.vendor_item);
      submitData.append('paid_by', form.paid_by);
      submitData.append('amount', form.amount);
      submitData.append('payment_method', form.payment_method);
@@ -121,11 +136,12 @@ const ExpenseManagement = () => {
         toast.success("Expense updated successfully")
         fetchExpenses(); // refresh list
         setEditItem(false);
+        setVendorSelect(null)
         setForm({  expense_date: "",
-      vendor_name :"",
+      vendor_id :"",
       amount: "",
       org_id:"",
-     
+     vendor_item:"",
       paid_by:"",
       category:"",
       service:"",
@@ -160,7 +176,7 @@ const ExpenseManagement = () => {
     try {
       const res = await fetch(`http://localhost:5000/api/expenses/${orgId}?page=${page}`);
       const data = await res.json();
-      // console.log(data)
+      console.log(data)
 
      let expense = data.data
       // console.log(data.data,'data')
@@ -184,12 +200,13 @@ setExpense(searchedUser)
 
   const handleAddItem = ()=>{
     setAddItem(true)
+    // setVendorSelect(null)
     setForm({
       expense_date: "",
-      vendor_name :"",
+      vendor_id :"",
       amount: "",
       org_id:"",
-     
+     vendor_item:"",
       paid_by:"",
       category:"",
       service:"",
@@ -261,29 +278,41 @@ const handleImageSelect = (e) => {
     }
   };
 
+const getVendorsItems = async(e)=>{
+  setForm({ ...form, [e.target.name]: e.target.value });
+  // console.log(form.vendor_id)
+  if(e.target.value){
+let res = await fetch(`http://localhost:5000/api/vendor/due/${e.target.value}`)
+  let data = await res.json()
+  console.log(data)
+  setVendorItems(data.vendors)
+  }
+  
 
-  // const handleTodayExpense = async()=>{
-  //   let res = await fetch(`http://localhost:5000/api/expenses/total/${orgId}`,{
-  //     method:"GET"
-  //   })
-  //   let data = await res.json()
-  //   if(data.success){
-  //     setExpenseTotal(data.total)
-  //   }
-  // }
-
-// useEffect(()=>{
-//   if (filter !== "") {
-//     fetchFilteredExpense();
-//   }
-// },[filterPage,searchTerm])
+}
 
   useEffect(()=>{
     let id = JSON.parse(localStorage.getItem('user')).org_id
       setOrgId(id)
     fetchExpenses()
+   
     
   },[page,searchTerm])
+  useEffect(()=>{
+    const loadVendors = async () => {
+    try {
+      let res = await fetch(`http://localhost:5000/api/vendor/${orgId}`);
+      let data = await res.json();
+      console.log("Vendors fetched:", data.vendors);
+      setVendorSelect(data.vendors || []);
+       // Ensure it's always an array
+    } catch (error) {
+      console.error("Error fetching vendors:", error);
+      setVendorSelect([]); // Set empty array on error
+    }
+  };
+  loadVendors()
+  },[])
   return (
     <>
     <ToastContainer/>
@@ -383,7 +412,6 @@ const handleImageSelect = (e) => {
             <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Amount</th>
             <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Category</th>
             <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Product/<br/>Service</th>
-            <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Vendor Name</th>
             <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Payment<br/> Method</th>
             <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Transaction<br/> Type</th>
             
@@ -398,9 +426,8 @@ const handleImageSelect = (e) => {
               <td className="px-6 py-4 whitespace-nowrap">{new Date(item.expense_date).toLocaleDateString()}</td>
               <td className='text-center'>{item.paid_by}</td>
               <td className='text-center'>₹ {item.amount}</td>
-              <td className='text-center'> {item.category}</td>
+              <td className='text-center'> {item.category}<br/>{item.vendor_name&&<span className='text-sm'>{`(${item.vendor_name})`}</span>}</td>
               <td className='text-center'>  {item.service}</td>
-              <td className='text-center'>{item.vendor_name}</td>
               <td className='text-center'>{item.payment_method}</td>
               <td className='text-center'>{item.transaction_type}</td>
              
@@ -485,6 +512,7 @@ const handleImageSelect = (e) => {
             className="w-full px-3 py-2 border rounded-lg"
           >
             <option value="">Select</option>
+            <option value="Vendor Payment">Vendor Payment</option>
             <option value="Staff Salary">Staff Salary</option>
             <option value="Rent">Rent</option>
             <option value="Food">Food</option>
@@ -507,16 +535,49 @@ const handleImageSelect = (e) => {
         </div>
 
         {/* Vendor Name */}
-        <div>
+         
+         {form.category==="Vendor Payment"&&
+         <div className='z-99 w-full'>
           <label className="block text-sm font-medium">Vendor Name</label>
-          <input
-            type="text"
-            name="vendor_name"
-            value={form.vendor_name}
-            onChange={(e) => setForm(prev => ({ ...prev, vendor_name: e.target.value.charAt(0).toUpperCase()+e.target.value.slice(1) }))}
-            className="w-full px-3 py-2 border rounded-lg"
-          />
+          <select
+            name="vendor_id"
+            value={form.vendor_id||''}
+            onChange={getVendorsItems}
+            className="w-full px-3 py-2 z-999 border rounded-lg"
+          >
+              <option value="">Select Vendor</option>
+      {vendorSelect && vendorSelect.length > 0 && (
+        
+        vendorSelect.map((vendor) => (
+          <option key={vendor.vendor_id || vendor.id} value={vendor.vendor_id || vendor.id}>
+            
+            {vendor.vendor_name}
+          </option>
+        ))
+      ) }
+   
+          </select>
         </div>
+        }
+        
+       { form.category==='Vendor Payment'&&
+         <div className='z-99 '>
+          <label className="block text-sm font-medium">Vendor Items</label>
+          <select
+            name="vendor_item"
+            value={form.vendor_item||''}
+            onChange={handleChange}
+            className="w-full px-3 py-2 z-999 border rounded-lg"
+          >
+              <option value="">Select Item</option>
+        {vendorItems.map((item)=>{
+          
+           return <option value={item.vendor_items_id}>{item.product_name}</option>
+          
+        })}
+        </select>
+        </div>
+         }
 
         {/* Credit */}
         
@@ -563,7 +624,7 @@ const handleImageSelect = (e) => {
         </div>
 
         {/* Transaction Type */}
-        <div>
+        <div >
           <label className="block text-sm font-medium">Transaction Type</label>
           <select
             name="transaction_type"
@@ -594,7 +655,7 @@ const handleImageSelect = (e) => {
       <div>
         <label className="block text-sm font-medium">Remark</label>
         <textarea
-          name="Remark"
+          name="description"
           value={form.description}
           onChange={handleChange}
           rows={3}

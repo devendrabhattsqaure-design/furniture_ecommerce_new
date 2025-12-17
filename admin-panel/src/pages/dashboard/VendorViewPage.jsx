@@ -1,12 +1,17 @@
 import { DollarSign, Edit2, Trash2, User2 } from 'lucide-react'
 import React, { useEffect, useState } from 'react'
-import { FaRev } from 'react-icons/fa'
+import { FaRev, FaRupeeSign } from 'react-icons/fa'
 import { useLocation, useParams } from 'react-router-dom'
 
 const VendorViewPage = () => {
     let API = 'http://localhost:5000/api'
     const [vendor,setVendor] = useState({})
     const [vendorItems,setVendorItems] = useState([])
+    const [isExpense,setIsExpense] = useState(null)
+    const [expense,setExpense] = useState([])
+    const [active, setActive] = useState("items");
+    const [total, setTotal] = useState(0);
+    const [due, setDue] = useState(0);
     const {id} = useParams()
 
     const getVendor = async()=>{
@@ -29,10 +34,27 @@ const getvendorItems = async()=>{
         console.log(data)
         if(data.success){
             setVendorItems(data.vendors)
+            setDue(data.total)
         }
 }
+const getvendorExpenses = async()=>{
+      let res = await fetch(`${API}/expenses/get-vendor/${id}`,{
+            method:"GET", 
+        })
+        let data = await res.json()
+        console.log(data)
+        if(data.success){
+            setExpense(data.data)
+            setTotal(data.total)
+        }
+}
+const handleToggle = (value) => {
+    setActive(value);
+    onChange?.(value); // send value to parent if needed
+  };
     useEffect(()=>{
             getVendor()
+            getvendorExpenses()
             
     },[])
   return (
@@ -60,14 +82,14 @@ const getvendorItems = async()=>{
               Total Products
             </p>
             <h4 className="block antialiased tracking-normal font-sans text-2xl font-semibold leading-snug text-blue-gray-900">
-              {/* {vendors.length} */}
-              10
+              {vendorItems.length}
+             
             </h4>
           </div>
         </div>
         <div className="relative flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md">
           <div className="bg-clip-border mx-4 rounded-xl overflow-hidden bg-gradient-to-tr from-green-600 to-green-400 text-white shadow-green-500/40 shadow-lg absolute -mt-4 grid h-10 w-10 place-items-center">
-            <DollarSign className="w-6 h-6 text-white" />
+            <FaRupeeSign className="w-6 h-6 text-white" />
           </div>
           <div className="p-4 text-right">
             <p className="block antialiased font-sans text-sm leading-normal font-normal text-blue-gray-600">
@@ -75,13 +97,13 @@ const getvendorItems = async()=>{
             </p>
             <h4 className="block antialiased tracking-normal font-sans text-2xl font-semibold leading-snug text-blue-gray-900">
               {/* {vendors.length} */}
-              10000
+              {total}
             </h4>
           </div>
         </div>
         <div className="relative flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md">
           <div className="bg-clip-border mx-4 rounded-xl overflow-hidden bg-gradient-to-tr from-green-600 to-green-400 text-white shadow-green-500/40 shadow-lg absolute -mt-4 grid h-10 w-10 place-items-center">
-            <DollarSign className="w-6 h-6 text-white" />
+            <FaRupeeSign className="w-6 h-6 text-white" />
           </div>
           <div className="p-4 text-right">
             <p className="block antialiased font-sans text-sm leading-normal font-normal text-blue-gray-600">
@@ -89,7 +111,7 @@ const getvendorItems = async()=>{
             </p>
             <h4 className="block antialiased tracking-normal font-sans text-2xl font-semibold leading-snug text-blue-gray-900">
               {/* {vendors.length} */}
-              5000
+             {due}
             </h4>
           </div>
         </div>
@@ -114,9 +136,103 @@ const getvendorItems = async()=>{
         </div>
 
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+
+{
+  active==='expense'?
+  <div>
+    <div className="inline-flex rounded-lg border border-gray-300 bg-gray-100 p-1">
+     
+      <button
+        onClick={() => handleToggle("expense")}
+        className={`px-4 py-2 rounded-md text-sm font-medium transition-all
+          ${
+            active === "expense"
+              ? "bg-blue-600 text-white shadow"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+      >
+        Expense
+      </button>
+
+      <button
+        onClick={() => handleToggle("items")}
+        className={`px-4 py-2 rounded-md text-sm font-medium transition-all
+          ${
+            active === "items"
+              ? "bg-blue-600 text-white shadow"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+      >
+        Items
+      </button>
+    </div>
+  <table
+          className="min-w-full divide-y divide-gray-200"
+        >
+          
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">S.No.</th>
+              <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Expense Date</th>
+              <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Paid By</th>
+              <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Amount</th>
+              <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Payment<br/> Method</th>
+              <th className="px-2 py-3 text-left text-xs font-bold text-gray-600 uppercase tracking-wider">Transaction<br/> Type</th>
+              
+            </tr>
+          </thead>
+  
+          <tbody className="bg-white divide-y divide-gray-200">
+            {expense?.map((item,i) => (
+              <tr className="hover:bg-gray-50 transition-colors" key={item.id}>
+                <td className='text-left'>{i+1}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{new Date(item.expense_date).toLocaleDateString()}</td>
+                <td className='text-left'>{item.paid_by}</td>
+                <td className='text-left'>₹ {item.amount}</td>
+                <td className='text-left'>{item.payment_method}</td>
+                <td className='text-left'>{item.transaction_type}</td>
+               
+              
+              
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        </div>
+        :
+        <div>  <div className="inline-flex rounded-lg border border-gray-300 bg-gray-100 p-1">
+     
+      <button
+        onClick={() => handleToggle("expense")}
+        className={`px-4 py-2 rounded-md text-sm font-medium transition-all
+          ${
+            active === "expense"
+              ? "bg-blue-600 text-white shadow"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+      >
+        Expense
+      </button>
+
+      <button
+        onClick={() => handleToggle("items")}
+        className={`px-4 py-2 rounded-md text-sm font-medium transition-all
+          ${
+            active === "items"
+              ? "bg-blue-600 text-white shadow"
+              : "text-gray-700 hover:bg-gray-200"
+          }`}
+      >
+        Items
+      </button>
+    </div>
+        <table className="min-w-full divide-y divide-gray-200">
+          
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">
+                 S.No.
+              </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">
                   Product Name
                 </th>
@@ -131,14 +247,16 @@ const getvendorItems = async()=>{
                   total
                 </th>
                 
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-800 uppercase tracking-wider">
-                  Actions
-                </th>
+               
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {vendorItems?.map((vendor) => (
+              {vendorItems?.map((vendor,i) => (
                 <tr key={vendor.vendor_id}>
+                  <td className="px-6 py-4 whitespace-nowrap">     
+                          {i+1}
+                  </td>
+                  
                   <td className="px-6 py-4 whitespace-nowrap">     
                           {vendor.product_name}
                   </td>
@@ -152,29 +270,16 @@ const getvendorItems = async()=>{
                     {vendor.product_total}
                   </td>
                 
-                  <td className="px-3 py-4 whitespace-nowrap text-sm font-medium">
-                                        <div className="flex items-center gap-1">
-                                          <button
-                                            onClick={() => handleEdit(vendor)}
-                                            className="text-blue-600 hover:text-blue-900 transition-colors p-2 rounded-lg hover:bg-blue-50"
-                                            title="Edit"
-                                          >
-                                            <Edit2 size={18} />
-                                          </button>
-                                          <button
-                                            onClick={() => handleDelete(vendor.vendor_id)}
-                                            className="text-red-600 hover:text-red-900 transition-colors p-2 rounded-lg hover:bg-red-50"
-                                            title="Delete"
-                                          >
-                                            <Trash2 size={18} />
-                                          </button>
-                                        </div>
-                                      </td>
+                  
                   
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
+}
+
+         
         </div>
 
       </div>

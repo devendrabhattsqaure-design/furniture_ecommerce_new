@@ -4,9 +4,9 @@ const db = require('../config/database');
 exports.createExpense= asyncHandler(async(req,res)=>{
   let {orgId} = req.params
     const {expense_date,
-      vendor_name ,
+      vendor_id ,
       amount,
-      
+      vendor_item,
       paid_by,
       category,
       service,
@@ -24,9 +24,9 @@ expenseDate = new Date(expenseDate + "T00:00:00");
     const [result] = await db.query(
         `INSERT INTO expenses (
           org_Id,expense_date,
-      vendor_name ,
+      vendor_id ,
       amount,
-      
+      vendor_item,
       paid_by,
       category,
       service,
@@ -35,13 +35,13 @@ expenseDate = new Date(expenseDate + "T00:00:00");
       description,
       bill_image
           
-        ) VALUES (?,?, ?, ?, ?, ?, ?, ?,?,?,?)`,
+        ) VALUES (?,?, ?, ?,?, ?, ?, ?, ?,?,?,?)`,
         [
           orgId,
           expense_date,
-      vendor_name ,
+      vendor_id ,
       amount,
-      
+      vendor_item,
       paid_by,
       category,
       service,
@@ -52,7 +52,21 @@ expenseDate = new Date(expenseDate + "T00:00:00");
           
         ]
       );
-
+      if(vendor_item){
+     let [items]=await db.query(`SELECT * FROM vendors_items where vendor_items_id=${vendor_item}`) 
+    if(items.length===0){
+      return res.status(404).json({
+        message:"No Items Found",
+        success:false
+      })
+    }
+    let item = items[0]
+    let dueAmount = item.product_due-amount
+    db.query(`UPDATE vendors_items SET product_due=? where vendor_items_id=${vendor_item} `,[
+      dueAmount
+    ])
+      }
+   
       res.status(201).json({
         message:"Expense created successfully",
         success:true
@@ -78,8 +92,21 @@ exports.getExpenses= asyncHandler(async(req,res)=>{
     
     const totalPages = Math.ceil(total / limit);
     const [expenses]=   await db.query(
-      `SELECT * FROM expenses WHERE org_id=${orgId} ORDER BY expense_date DESC LIMIT ? OFFSET ?`,
-      [limit, offset]
+      `SELECT 
+    e.*,
+      v.vendor_id,
+    v.vendor_number,
+    v.vendor_address,
+    v.vendor_gstno
+  FROM expenses e
+  LEFT JOIN vendors v 
+    ON e.vendor_id = v.vendor_id
+  WHERE e.org_id = ?
+  ORDER BY e.expense_date DESC
+  LIMIT ? OFFSET ?
+  `,
+  [orgId, limit, offset],
+      
     );
      const updatedRows = expenses.map((item) => ({
       ...item,
@@ -162,7 +189,7 @@ exports.editExpense=asyncHandler(async(req,res)=>{
     await db.query(
   `UPDATE expenses SET
     expense_date = ?,
-    vendor_name = ?,
+    vendor_id = ?,
     amount = ?,
     paid_by = ?,
     category = ?,
@@ -237,7 +264,7 @@ if (date) {
 if (search && search.trim() !== "") {
   whereClause += `
     AND (
-      vendor_name LIKE ? OR 
+      vendor_id LIKE ? OR 
       paid_by LIKE ?
     )
   `;
@@ -292,4 +319,62 @@ const monthTotal = row[0].today_total || 0;
     page
   });
 
+})
+
+
+exports.getVendorExpenses= asyncHandler(async(req,res)=>{
+  let {id} =req.params
+  
+    const [expenses]=   await db.query(
+      `SELECT 
+    e.*,
+      v.vendor_id,
+    v.vendor_number,
+    v.vendor_address,
+    v.vendor_gstno
+  FROM expenses e
+  LEFT JOIN vendors v 
+    ON e.vendor_id = v.vendor_id
+  WHERE e.vendor_id = ?
+  ORDER BY e.expense_date DESC
+  
+  `,
+  [id],
+      
+    );
+     const updatedRows = expenses.map((item) => ({
+      ...item,
+      expense_date: addOneDay(item.expense_date),
+    }));
+    // console.log(updatedRows,'yfyjhf');
+    
+    if(!expenses){
+        return res.status(404).json({
+            message:"No expenses found",
+            success:false
+        })
+    }
+    // console.log(data,'data');
+ 
+// const selectedMonth =  new Date().getMonth() + 1; // JS month is 0 based
+// const selectedYear  = new Date().getFullYear();
+
+const [row] = await db.query(
+  `SELECT SUM(amount) AS total
+   FROM expenses
+   WHERE vendor_id = ? 
+  `,
+  [id]
+);
+
+const total = row[0].total || 0;
+
+// const todayTotal = rows[0].today_total || 0;
+    return res.status(201).json({
+        data:updatedRows,
+        total,
+        message:"Expenses found",
+        
+        success:true
+    })
 })

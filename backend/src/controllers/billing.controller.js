@@ -4,14 +4,13 @@ const QRCode = require('qrcode');
 const path = require('path');
 const fs = require('fs');
 
-// Helper to get organization ID
 const getOrgId = (req) => {
   return req.user?.org_id || req.headers['x-org-id'] || null;
 };
 
 const generateQRCode = async (billId, orgId, billNumber) => {
   try {
-    // Create QR data
+ 
     const qrData = {
       billId,
       billNumber, 
@@ -33,17 +32,13 @@ const generateQRCode = async (billId, orgId, billNumber) => {
       }
     });
     
-    // Store the full data URL in database
-    return qrCodeDataURL; // This is the base64 string
+    return qrCodeDataURL; 
     
   } catch (error) {
     console.error('Error generating QR code:', error);
     return null;
   }
 };
-
-
-
 
 // Update the createBill function
 exports.createBill = asyncHandler(async (req, res) => {
@@ -253,12 +248,42 @@ exports.createBill = asyncHandler(async (req, res) => {
     );
 
     const billId = billResult.insertId;
+    
      // Generate QR code
     const qrCodePath = await generateQRCode(billId, orgId, billNumber);
-    // Update bill with QR code path
-    if (qrCodeDataURL) {
+  // Record initial payment if paid_amount > 0
+if (paidAmount > 0) {
+  // Get the user ID from request
+  const createdBy = req.user?.id || req.user?.user_id;
+  
+  // Record the initial payment
+  await connection.query(`
+    INSERT INTO payments (
+      org_id, bill_id, bill_number, customer_name, customer_phone,
+      payment_amount, previous_due, new_due, payment_method, notes, created_by
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `, [
+    orgId, 
+    billId, 
+    billNumber, // Use the billNumber variable from above
+    customer_name, 
+    customer_phone,
+    paidAmount, // Use paidAmount variable
+    total_amount, // Previous due was the total amount
+    dueAmount, // New due after payment
+    payment_method || 'cash', 
+    'Initial payment - Bill creation', 
+    createdBy || req.user?.user_id
+  ]);
+}
+
+// Generate QR code
+const qrCodeDataURL = await generateQRCode(billId, orgId, billNumber);
+
+// Update bill with QR code path
+if (qrCodeDataURL) {
   await connection.query(
-    'UPDATE bills SET qr_code = ? WHERE bill_id = ?',
+    'UPDATE bills SET qr_code_path = ? WHERE bill_id = ?',
     [qrCodeDataURL, billId] // Store base64 directly
   );
 }

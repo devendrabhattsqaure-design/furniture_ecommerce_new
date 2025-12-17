@@ -10,7 +10,7 @@ exports.createVendor = asyncHandler(async(req,res)=>{
                 success:false
             })
         }
-
+console.log(req.body)
        let ress= await db.query(`INSERT INTO vendors (vendor_name,vendor_number,vendor_address,vendor_gstno,org_id)
         VALUES(?,?,?,?,?)
         `,[
@@ -34,7 +34,7 @@ exports.createVendor = asyncHandler(async(req,res)=>{
 exports.updateVendor = asyncHandler(async(req,res)=>{
     let {id} = req.params
     try {
-        let {vendor_name,vendor_number,vendor_address,vendor_gstno,added_by} = req.body
+        let {vendor_name,vendor_number,vendor_address,vendor_gstno} = req.body
         console.log(req.body)
         let [vendors] = await db.query(`SELECT * FROM vendors where vendor_id=${id}`)
         if(vendors.length===0){
@@ -156,9 +156,45 @@ exports.getVendor= asyncHandler(async(req,res)=>{
 exports.getVendorItems= asyncHandler(async(req,res)=>{
     try {
         let {id} = req.params
-        
+        console.log(id)
 
         let [vendors] = await db.query(`SELECT * FROM vendors_items where vendor_id=${id}`)
+        const [row] = await db.query(
+  `SELECT SUM(product_due) AS total
+   FROM vendors_items
+   WHERE vendor_id = ? 
+  `,
+  [id]
+);
+
+const total = row[0].total || 0;
+         
+        if(vendors.length===0){
+            return res.status(400).json({
+                message:"No vendor found",
+                success:false
+            })
+        }
+        return res.status(200).json({
+            vendors,
+           total,
+            message:"Vendor Items found successfully",
+            success:true
+        })
+        
+    } catch (error) {
+         return res.status(404).json({
+            message:error.message,
+            success:false
+        })
+    }
+})
+exports.getVendorDueItems= asyncHandler(async(req,res)=>{
+    try {
+        let {id} = req.params
+        console.log(id)
+
+        let [vendors] = await db.query(`SELECT * FROM vendors_items where vendor_id=${id} AND product_due>0`)
          
         if(vendors.length===0){
             return res.status(400).json({

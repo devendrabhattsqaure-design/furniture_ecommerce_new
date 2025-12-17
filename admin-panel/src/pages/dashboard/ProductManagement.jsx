@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { CubeIcon, PlusIcon,  } from "@heroicons/react/24/solid";
-import { Plus, Edit2, Trash2, } from "lucide-react";
+import { Plus, Edit2, Trash2, Eye, } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 const ProductManagement = () => {
   const navigate = useNavigate()
@@ -27,6 +27,7 @@ const ProductManagement = () => {
     price: '',
     compare_price: '',
     cost_price: '',
+    purchase_price: '',
     material: '',
     color: '',
     dimensions: '',
@@ -231,7 +232,7 @@ console.log(formDataToSend)
         
         setEditingProduct(productData);
         setFormData({
-          
+          vendor_id: productData.vendor_id || '',
           product_name: productData.product_name || '',
           slug: productData.slug || '',
           sku: productData.sku || '',
@@ -242,13 +243,14 @@ console.log(formDataToSend)
           price: productData.price || '',
           compare_price: productData.compare_price || '',
           cost_price: productData.cost_price || '',
+          purchase_price: productData.purchase_price || '',
           material: productData.material || '',
           color: productData.color || '',
           dimensions: productData.dimensions || '',
           weight: productData.weight || '',
           stock_quantity: productData.stock_quantity || '',
           low_stock_threshold: productData.low_stock_threshold || '10',
-          // Ensure boolean fields are properly set from existing data
+         
           is_featured: Boolean(productData.is_featured),
           is_bestseller: Boolean(productData.is_bestseller),
           is_new_arrival: Boolean(productData.is_new_arrival),
@@ -283,6 +285,7 @@ console.log(formDataToSend)
       price: '',
       compare_price: '',
       cost_price: '',
+      purchase_price: '', 
       material: '',
       color: '',
       dimensions: '',
@@ -326,7 +329,18 @@ console.log(formDataToSend)
   }
 };
 
+const calculateMargin = (price, purchasePrice) => {
+  if (!purchasePrice || purchasePrice === 0) return 'N/A';
+  
+  const margin = ((price - purchasePrice) / purchasePrice) * 100;
+  return `${margin.toFixed(2)}%`;
+};
 
+// Add this helper function to calculate margin amount
+const calculateMarginAmount = (price, purchasePrice) => {
+  if (!purchasePrice) return 'N/A';
+  return (price - purchasePrice).toFixed(2);
+};
 
 
   const getVendor = async(orgId)=>{
@@ -381,6 +395,12 @@ console.log(formDataToSend)
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Price
                 </th>
+                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+        Purchase Price
+      </th>
+      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+        Margin
+      </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Stock
                 </th>
@@ -393,9 +413,16 @@ console.log(formDataToSend)
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {products.map((product) => (
-                <tr onClick={()=>{navigate(`/dashboard/product-management/${product.product_id}`)}} key={product.product_id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
+    {products.map((product) => {
+      const margin = calculateMargin(product.price, product.purchase_price);
+      const marginAmount = calculateMarginAmount(product.price, product.purchase_price);
+      const marginColor = margin === 'N/A' ? 'text-gray-500' : 
+                         parseFloat(margin) >= 30 ? 'text-green-600 font-semibold' :
+                         parseFloat(margin) >= 10 ? 'text-blue-600' : 'text-orange-600';
+      
+      return (
+        <tr key={product.product_id}>
+           <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       {product.images && product.images[0] && (
                         <img 
@@ -412,15 +439,28 @@ console.log(formDataToSend)
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {product.category_name}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ${product.price}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {product.stock_quantity}
-                  </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {product.category_name}
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+            ₹{product.price}
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {product.purchase_price ? `₹${product.purchase_price}` : 'N/A'}
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm">
+            <div className={`${marginColor}`}>
+              {margin}
+              {margin !== 'N/A' && (
+                <div className="text-xs text-gray-500">
+                  (₹{marginAmount})
+                </div>
+              )}
+            </div>
+          </td>
+          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+            {product.stock_quantity}
+          </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`inline-flex px-2 text-xs font-semibold leading-5 rounded-full ${
@@ -434,6 +474,13 @@ console.log(formDataToSend)
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div className="flex items-center gap-3">
+                                              <button
+                                           onClick={()=>{navigate(`/dashboard/product-management/${product.product_id}`)}}
+                                            className="text-blue-600 hover:text-blue-900 transition-colors p-2 rounded-lg hover:bg-blue-50"
+                                            title="Edit"
+                                          >
+                                            <Eye size={18} />
+                                          </button>
                                           <button
                                             onClick={() => handleEdit(product)}
                                             className="text-blue-600 hover:text-blue-900 transition-colors p-2 rounded-lg hover:bg-blue-50"
@@ -452,7 +499,8 @@ console.log(formDataToSend)
                                       </td>
                   
                 </tr>
-              ))}
+              );
+    })}
             </tbody>
           </table>
         </div>
@@ -556,8 +604,7 @@ console.log(formDataToSend)
                   />
                 </div>
 
-                {/* Category */}
-               
+           
                 {/* Brand */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -587,6 +634,20 @@ console.log(formDataToSend)
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
+                {/* Purchase Price */}
+<div>
+  <label className="block text-sm font-medium text-gray-700 mb-1">
+    Purchase Price
+  </label>
+  <input
+    type="number"
+    step="0.01"
+    name="purchase_price"
+    value={formData.purchase_price}
+    onChange={handleInputChange}
+    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+  />
+</div>
 
                 {/* Compare Price */}
                 <div>

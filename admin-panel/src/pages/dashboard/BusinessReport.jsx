@@ -2,7 +2,8 @@ import React, { useState, useEffect } from "react";
 import { 
   DollarSign, CreditCard, Users, Download, 
   Filter, Search, Calendar, TrendingUp,
-  FileText, Receipt, User, Phone, Clock
+  FileText, Receipt, User, Phone, Clock,
+  Wallet, CheckCircle, AlertCircle // Added new icons
 } from "lucide-react";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -21,6 +22,7 @@ const BusinessReport = () => {
     customer_phone: '',
     start_date: '',
     end_date: '',
+    payment_type: 'all', // Added: 'all', 'initial', 'dues'
     page: 1,
     limit: 10
   });
@@ -31,7 +33,7 @@ const BusinessReport = () => {
   useEffect(() => {
     fetchBusinessReport();
     fetchPayments();
-  }, [paymentFilter.page]);
+  }, [paymentFilter.page, paymentFilter.payment_type]);
 
   const fetchBusinessReport = async () => {
     try {
@@ -59,28 +61,62 @@ const BusinessReport = () => {
     }
   };
 
- const fetchPayments = async () => {
-  try {
-    const token = localStorage.getItem('token');
-    const params = new URLSearchParams(paymentFilter);
-    
-    const response = await fetch(`${API_BASE_URL}/payments?${params}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
+  const fetchPayments = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const params = new URLSearchParams(paymentFilter);
+      
+      // Use business-report/payments if payments endpoint doesn't exist
+      const response = await fetch(`${API_BASE_URL}/business-report/payments?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setPaymentData(data.data);
+      } else {
+        // Try the regular payments endpoint
+        const response2 = await fetch(`${API_BASE_URL}/payments?${params}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (response2.ok) {
+          const data = await response2.json();
+          setPaymentData(data.data);
+        } else {
+          console.log('Payment routes not available yet');
+          setPaymentData({
+            payments: [],
+            summary: {
+              total_payments: 0,
+              total_amount: 0,
+              total_initial: 0,
+              total_dues: 0,
+              unique_customers: 0,
+              payment_methods_used: 0
+            },
+            pagination: {
+              page: 1,
+              limit: 10,
+              total: 0,
+              totalPages: 0
+            }
+          });
+        }
       }
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      setPaymentData(data.data);
-    } else if (response.status === 404) {
-      // Payment route not implemented yet
-      console.log('Payment route not implemented');
+    } catch (error) {
+      console.error('Error fetching payments:', error);
       setPaymentData({
         payments: [],
         summary: {
           total_payments: 0,
           total_amount: 0,
+          total_initial: 0,
+          total_dues: 0,
           unique_customers: 0,
           payment_methods_used: 0
         },
@@ -91,61 +127,13 @@ const BusinessReport = () => {
           totalPages: 0
         }
       });
-    } else {
-      toast.error("Failed to fetch payments");
     }
-  } catch (error) {
-    console.error('Error fetching payments:', error);
-    // Don't show error if route doesn't exist yet
-    setPaymentData({
-      payments: [],
-      summary: {
-        total_payments: 0,
-        total_amount: 0,
-        unique_customers: 0,
-        payment_methods_used: 0
-      },
-      pagination: {
-        page: 1,
-        limit: 10,
-        total: 0,
-        totalPages: 0
-      }
-    });
-  }
-};
-
-  const fetchPaymentSummary = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const params = new URLSearchParams(filter);
-      
-      const response = await fetch(`${API_BASE_URL}/payments/summary?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        return data.data;
-      }
-    } catch (error) {
-      console.error('Error fetching payment summary:', error);
-    }
-    return null;
-  };
-
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
-    setFilter(prev => ({ ...prev, [name]: value }));
   };
 
   const handlePaymentFilterChange = (e) => {
     const { name, value } = e.target;
     setPaymentFilter(prev => ({ ...prev, [name]: value, page: 1 }));
   };
-
   const handleApplyFilter = () => {
     fetchBusinessReport();
   };
@@ -153,8 +141,7 @@ const BusinessReport = () => {
   const handleApplyPaymentFilter = () => {
     fetchPayments();
   };
-
-  const handleResetFilter = () => {
+ const handleResetFilter = () => {
     setFilter({
       report_type: 'today',
       start_date: '',
@@ -162,46 +149,16 @@ const BusinessReport = () => {
     });
     fetchBusinessReport();
   };
-
   const handleResetPaymentFilter = () => {
     setPaymentFilter({
       customer_name: '',
       customer_phone: '',
       start_date: '',
       end_date: '',
+      payment_type: 'all',
       page: 1,
       limit: 10
     });
-  };
-
-  const exportToExcel = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const params = new URLSearchParams(filter);
-      
-      const response = await fetch(`${API_BASE_URL}/business-report/export?${params}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Business_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        toast.success("Report exported successfully!");
-      } else {
-        toast.error("Failed to export report");
-      }
-    } catch (error) {
-      console.error('Error exporting report:', error);
-      toast.error("Error exporting report");
-    }
   };
 
   const exportPaymentsToExcel = async () => {
@@ -209,29 +166,49 @@ const BusinessReport = () => {
       const token = localStorage.getItem('token');
       const params = new URLSearchParams({
         ...paymentFilter,
-        limit: 1000 // Export more records
+        limit: 1000
       });
       
-      const response = await fetch(`${API_BASE_URL}/payments?${params}`, {
+      let response;
+      
+      // Try business-report/payments first
+      response = await fetch(`${API_BASE_URL}/business-report/payments?${params}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       
+      if (!response.ok) {
+        // Try regular payments endpoint
+        response = await fetch(`${API_BASE_URL}/payments?${params}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+      }
+      
       if (response.ok) {
         const data = await response.json();
+        
+        if (!data.data || !data.data.payments || data.data.payments.length === 0) {
+          toast.info("No payment records to export");
+          return;
+        }
+        
         // Create CSV content
-        const headers = ['Date', 'Bill No.', 'Customer', 'Phone', 'Payment Amount', 'Previous Due', 'New Due', 'Method', 'Collected By'];
+        const headers = ['Date', 'Bill No.', 'Customer', 'Phone', 'Payment Amount', 'Type', 'Previous Due', 'New Due', 'Method', 'Notes', 'Collected By'];
         const rows = data.data.payments.map(payment => [
           new Date(payment.payment_date).toLocaleDateString(),
-          payment.bill_number,
-          payment.customer_name,
-          payment.customer_phone,
-          payment.payment_amount,
-          payment.previous_due,
-          payment.new_due,
-          payment.payment_method,
-          payment.collected_by_name
+          payment.bill_number || 'N/A',
+          payment.customer_name || 'N/A',
+          payment.customer_phone || 'N/A',
+          payment.payment_amount || '0',
+          payment.previous_due === payment.payment_amount ? 'Initial' : 'Dues',
+          payment.previous_due || '0',
+          payment.new_due || '0',
+          payment.payment_method || 'cash',
+          payment.notes || '',
+          payment.collected_by_name || 'N/A'
         ]);
         
         const csvContent = [
@@ -243,7 +220,7 @@ const BusinessReport = () => {
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `Payments_Report_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `All_Payments_${new Date().toISOString().split('T')[0]}.csv`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
@@ -261,17 +238,45 @@ const BusinessReport = () => {
     return new Intl.NumberFormat('en-IN', {
       style: 'currency',
       currency: 'INR',
-      minimumFractionDigits: 2
-    }).format(amount);
+      
+    }).format(amount || 0);
   };
 
   const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-IN', {
       day: '2-digit',
       month: 'short',
-      year: 'numeric'
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     });
   };
+
+  // Helper to determine payment type
+  const getPaymentType = (payment) => {
+    const prevDue = parseFloat(payment.previous_due || 0);
+    const paymentAmt = parseFloat(payment.payment_amount || 0);
+    
+    // If previous due equals payment amount (or very close), it's likely an initial payment
+    if (Math.abs(prevDue - paymentAmt) < 0.01) {
+      return 'Initial';
+    } else if (payment.notes && payment.notes.toLowerCase().includes('initial')) {
+      return 'Initial';
+    } else if (paymentAmt < prevDue) {
+      return 'Dues';
+    }
+    return 'Payment';
+  };
+
+  // Filter payments based on payment_type
+  const filteredPayments = paymentData?.payments ? paymentData.payments.filter(payment => {
+    if (paymentFilter.payment_type === 'all') return true;
+    const type = getPaymentType(payment);
+    if (paymentFilter.payment_type === 'initial') return type === 'Initial';
+    if (paymentFilter.payment_type === 'dues') return type === 'Dues';
+    return true;
+  }) : [];
 
   if (loading && !paymentData) {
     return (
@@ -316,7 +321,7 @@ const BusinessReport = () => {
               >
                 <div className="flex items-center gap-2">
                   <DollarSign className="w-4 h-4" />
-                  Payment Records
+                  All Payment Records
                 </div>
               </button>
               
@@ -347,7 +352,7 @@ const BusinessReport = () => {
               <Filter className="w-5 h-5 text-blue-600" />
               <h3 className="text-lg font-semibold">Filter Payments</h3>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Customer Name</label>
                 <input
@@ -393,6 +398,20 @@ const BusinessReport = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Payment Type</label>
+                <select
+                  name="payment_type"
+                  value={paymentFilter.payment_type}
+                  onChange={handlePaymentFilterChange}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="all">All Payments</option>
+                  <option value="initial">Initial Payments</option>
+                  <option value="dues">Dues Payments</option>
+                </select>
+              </div>
             </div>
             
             <div className="flex justify-end gap-2">
@@ -428,7 +447,7 @@ const BusinessReport = () => {
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-600">Total Payments</p>
-                    <p className="text-xl font-bold text-gray-900">{paymentData.summary.total_payments}</p>
+                    <p className="text-xl font-bold text-gray-900">{paymentData.summary.total_payments || 0}</p>
                   </div>
                 </div>
               </div>
@@ -436,10 +455,10 @@ const BusinessReport = () => {
               <div className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-green-100 rounded-lg">
-                    <DollarSign className="w-5 h-5 text-green-600" />
+                    <Wallet className="w-5 h-5 text-green-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Todays's Payment</p>
+                    <p className="text-sm font-medium text-gray-600">Total Amount</p>
                     <p className="text-xl font-bold text-gray-900">
                       {formatCurrency(paymentData.summary.total_amount)}
                     </p>
@@ -447,49 +466,84 @@ const BusinessReport = () => {
                 </div>
               </div>
 
-              {/* <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-purple-100 rounded-lg">
-                    <Users className="w-5 h-5 text-purple-600" />
+                    <CheckCircle className="w-5 h-5 text-purple-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Unique Customers</p>
+                    <p className="text-sm font-medium text-gray-600">Initial Payments</p>
                     <p className="text-xl font-bold text-gray-900">
-                      {paymentData.summary.unique_customers}
+                      {formatCurrency(paymentData.summary.total_initial || 0)}
                     </p>
                   </div>
                 </div>
-              </div> */}
+              </div>
 
-              {/* <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="bg-white rounded-lg shadow-md p-6">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-orange-100 rounded-lg">
-                    <CreditCard className="w-5 h-5 text-orange-600" />
+                    <AlertCircle className="w-5 h-5 text-orange-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Payment Methods</p>
+                    <p className="text-sm font-medium text-gray-600">Dues Payments</p>
                     <p className="text-xl font-bold text-gray-900">
-                      {paymentData.summary.payment_methods_used}
+                      {formatCurrency(paymentData.summary.total_dues || 0)}
                     </p>
                   </div>
                 </div>
-              </div> */}
+              </div>
             </div>
           )}
 
           {/* Payments Table */}
           <div className="bg-white rounded-lg shadow-md overflow-hidden">
-            <div className="p-4 border-b border-gray-200 flex justify-between items-center">
-              <h3 className="text-lg font-semibold">Payment Records</h3>
-              <span className="text-sm text-gray-600">
-                {paymentData?.pagination?.total || 0} records found
-              </span>
-            </div>
+          <div className="p-4 border-b border-gray-200">
+  <div className="flex justify-between items-center mb-2">
+    <div>
+      <h3 className="text-lg font-semibold inline-block mr-4">
+        {paymentFilter.payment_type === 'all' ? 'All Payment Records' : 
+         paymentFilter.payment_type === 'initial' ? 'Initial Payments' : 'Dues Payments'}
+      </h3>
+      <span className="text-sm text-gray-600">
+        ({filteredPayments.length} records)
+      </span>
+    </div>
+    
+    {/* Total Collected and Total Dues on the right side */}
+    <div className="text-sm">
+      <span className="text-gray-600">Collected: </span>
+      <span className="font-bold text-green-600 mr-4">
+        {formatCurrency(
+          filteredPayments.reduce((sum, payment) => 
+            sum + parseFloat(payment.payment_amount || 0), 0
+          )
+        )}
+      </span>
+      
+      <span className="text-gray-600">Dues: </span>
+      <span className="font-bold text-red-600">
+        {formatCurrency(
+          filteredPayments.reduce((sum, payment) => 
+            sum + parseFloat(payment.new_due || 0), 0
+          )
+        )}
+      </span>
+    </div>
+  </div>
+</div>
             
-            {!paymentData?.payments || paymentData.payments.length === 0 ? (
+            {filteredPayments.length === 0 ? (
               <div className="text-center p-8 text-gray-500">
                 <Receipt className="w-12 h-12 mx-auto mb-3 text-gray-300" />
                 <p className="text-sm">No payment records found</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {paymentFilter.payment_type === 'initial' 
+                    ? 'Initial payments will appear here when bills are created with upfront payment.'
+                    : paymentFilter.payment_type === 'dues'
+                    ? 'Dues payments will appear here when customers pay outstanding amounts.'
+                    : 'Payment records will appear here when bills are created or dues are paid.'}
+                </p>
               </div>
             ) : (
               <>
@@ -500,57 +554,73 @@ const BusinessReport = () => {
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date & Time</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bill No.</th>
-                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment Amount</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paid Amount</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Previous Due</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">New Due</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
                         <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Collected By</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-200">
-                      {paymentData.payments.map((payment) => (
-                        <tr key={payment.payment_id} className="hover:bg-gray-50">
-                          <td className="px-4 py-3 whitespace-nowrap text-sm">
-                            <div>{formatDate(payment.payment_date)}</div>
-                            <div className="text-gray-500 text-xs">
-                              {new Date(payment.payment_date).toLocaleTimeString()}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <div className="font-medium">{payment.customer_name}</div>
-                            {payment.customer_phone && (
-                              <div className="text-sm text-gray-500 flex items-center gap-1">
-                                <Phone className="w-3 h-3" />
-                                {payment.customer_phone}
-                              </div>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <span className="font-mono text-blue-600">{payment.bill_number}</span>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <span className="font-bold text-green-600">
-                              {formatCurrency(payment.payment_amount)}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-red-600">
-                            {formatCurrency(payment.previous_due)}
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <span className={`font-medium ${payment.new_due > 0 ? 'text-orange-600' : 'text-green-600'}`}>
-                              {formatCurrency(payment.new_due)}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap">
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                              {payment.payment_method}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 whitespace-nowrap text-sm">
-                            {payment.collected_by_name || 'N/A'}
-                          </td>
-                        </tr>
-                      ))}
+                      {filteredPayments.map((payment) => {
+                        const paymentType = getPaymentType(payment);
+                        return (
+                          <tr key={payment.payment_id} className="hover:bg-gray-50">
+                            <td className="px-4 py-3 whitespace-nowrap text-sm">
+                              <div>{formatDate(payment.payment_date)}</div>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <div className="font-medium">{payment.customer_name || 'N/A'}</div>
+                              {payment.customer_phone && (
+                                <div className="text-sm text-gray-500 flex items-center gap-1">
+                                  <Phone className="w-3 h-3" />
+                                  {payment.customer_phone}
+                                </div>
+                              )}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className="font-mono text-blue-600">{payment.bill_number || 'N/A'}</span>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className="font-bold text-green-600">
+                                {formatCurrency(payment.payment_amount)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                paymentType === 'Initial' 
+                                  ? 'bg-green-100 text-green-800'
+                                  : paymentType === 'Dues'
+                                  ? 'bg-orange-100 text-orange-800'
+                                  : 'bg-blue-100 text-blue-800'
+                              }`}>
+                                {paymentType}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-red-600">
+                              {formatCurrency(payment.previous_due)}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className={`font-medium ${(parseFloat(payment.new_due) || 0) > 0 ? 'text-orange-600' : 'text-green-600'}`}>
+                                {formatCurrency(payment.new_due)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                {payment.payment_method || 'cash'}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm">
+                              {payment.collected_by_name || 'N/A'}
+                            </td>
+                            <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-500 max-w-xs truncate">
+                              {payment.notes || '-'}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -602,7 +672,7 @@ const BusinessReport = () => {
                 <select
                   name="report_type"
                   value={filter.report_type}
-                  onChange={handleFilterChange}
+                  onChange={(e) => setFilter(prev => ({ ...prev, report_type: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   <option value="today">Today</option>
@@ -621,7 +691,7 @@ const BusinessReport = () => {
                       type="date"
                       name="start_date"
                       value={filter.start_date}
-                      onChange={handleFilterChange}
+                      onChange={(e) => setFilter(prev => ({ ...prev, start_date: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
@@ -631,7 +701,7 @@ const BusinessReport = () => {
                       type="date"
                       name="end_date"
                       value={filter.end_date}
-                      onChange={handleFilterChange}
+                      onChange={(e) => setFilter(prev => ({ ...prev, end_date: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                   </div>
@@ -757,6 +827,43 @@ const BusinessReport = () => {
       )}
     </div>
   );
+};
+
+// Add missing exportToExcel function
+const exportToExcel = async () => {
+  try {
+    const token = localStorage.getItem('token');
+    const API_BASE_URL = "http://localhost:5000/api";
+    const filter = {
+      report_type: 'today',
+      start_date: '',
+      end_date: ''
+    };
+    const params = new URLSearchParams(filter);
+    
+    const response = await fetch(`${API_BASE_URL}/business-report/export?${params}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    if (response.ok) {
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Business_Report_${new Date().toISOString().split('T')[0]}.xlsx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success("Report exported successfully!");
+    } else {
+      toast.error("Failed to export report");
+    }
+  } catch (error) {
+    console.error('Error exporting report:', error);
+    toast.error("Error exporting report");
+  }
 };
 
 export default BusinessReport;

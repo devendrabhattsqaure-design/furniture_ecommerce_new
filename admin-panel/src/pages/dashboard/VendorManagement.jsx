@@ -18,7 +18,7 @@ const VendorManagement = () => {
         vendor_address:"",
         vendor_number:"",
         vendor_gstno:"",
-        added_by:"",
+      
         org_id:""
     })
 
@@ -58,7 +58,7 @@ const VendorManagement = () => {
         vendor_address:vendor.vendor_address,
         vendor_number:vendor.vendor_number,
         vendor_gstno:vendor.vendor_gstno,
-        added_by:vendor.added_by,
+        
         })
     }
     const handleAdd = async(e)=>{
@@ -69,7 +69,7 @@ const VendorManagement = () => {
         vendor_address:"",
         vendor_number:"",
         vendor_gstno:"",
-        added_by:"",
+      
         org_id:orgId
         
     })
@@ -119,7 +119,7 @@ const VendorManagement = () => {
               Total Vendors
             </p>
             <h4 className="block antialiased tracking-normal font-sans text-2xl font-semibold leading-snug text-blue-gray-900">
-              {vendors.length}
+              {vendors?.length}
             </h4>
           </div>
         </div>
@@ -140,6 +140,9 @@ const VendorManagement = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
+                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
+                  S.No
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
                   Vendor Name
                 </th>
@@ -160,8 +163,11 @@ const VendorManagement = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {vendors?.map((vendor) => (
+              {vendors?.map((vendor,i) => (
                 <tr key={vendor.vendor_id} onClick={() => navigate(`/dashboard/vendor/${vendor.vendor_id}`, { state: vendor }) }>
+                   <td className="px-6 py-4 whitespace-nowrap">     
+                          {i+1}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap">     
                           {vendor.vendor_name}
                   </td>
@@ -222,7 +228,7 @@ const VendorManagement = () => {
                   </label>
                   <input
                     inputMode="numeric"             // Mobile numeric keyboard
-                    pattern="\d{10}"
+                    
                     maxLength={10}
                     minLength={10}
                     name="vendor_number"
@@ -258,7 +264,7 @@ const VendorManagement = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                 <div>
+                 {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                    Added By
                   </label>
@@ -269,7 +275,7 @@ const VendorManagement = () => {
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                </div>
+                </div> */}
 
 
                 {/* Form Actions */}

@@ -28,7 +28,8 @@ const PaymentModal = ({ bill, onClose, onSuccess }) => {
     }
   };
 
- const handlePaymentUpdate = async () => {
+ // PaymentModal.jsx - Update handlePaymentUpdate function
+const handlePaymentUpdate = async () => {
   if (!bill) return;
   
   const payment = parseFloat(paymentAmount);
@@ -38,6 +39,7 @@ const PaymentModal = ({ bill, onClose, onSuccess }) => {
   }
 
   const currentDue = parseFloat(bill.due_amount || 0);
+  const currentPaid = parseFloat(bill.paid_amount || 0);
   
   if (payment > currentDue) {
     toast.error(`Maximum payment amount is ₹${currentDue.toLocaleString('en-IN')}`);
@@ -45,19 +47,20 @@ const PaymentModal = ({ bill, onClose, onSuccess }) => {
   }
 
   const newDueAmount = currentDue - payment;
-  const newPaidAmount = parseFloat(bill.paid_amount || 0) + payment;
+  const newPaidAmount = currentPaid + payment;
 
   try {
     setLoading(true);
     const token = localStorage.getItem('token');
     const orgId = getOrgId();
+    const userId = getUserId();
     
-    if (!orgId) {
-      toast.error('Organization not found. Please login again.');
+    if (!orgId || !userId) {
+      toast.error('Organization or user not found. Please login again.');
       return;
     }
 
-    // First, update the bill directly
+    // First, update the bill
     const billResponse = await fetch(`${API_BASE_URL}/bills/${bill.bill_id}/payment`, {
       method: 'PUT',
       headers: {
@@ -77,36 +80,30 @@ const PaymentModal = ({ bill, onClose, onSuccess }) => {
       throw new Error(billData.message || 'Failed to update payment');
     }
 
-    // Then, try to record the payment entry
-    try {
-      const paymentResponse = await fetch(`${API_BASE_URL}/payments`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'x-org-id': orgId
-        },
-        body: JSON.stringify({
-          bill_id: bill.bill_id,
-          bill_number: bill.bill_number,
-          customer_name: bill.customer_name,
-          customer_phone: bill.customer_phone,
-          payment_amount: payment,
-          previous_due: currentDue,
-          new_due: newDueAmount,
-          payment_method: paymentMethod,
-          notes: notes,
-          created_by: getUserId()
-        })
-      });
+    // Then, record the payment entry
+    const paymentResponse = await fetch(`${API_BASE_URL}/payments`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        'x-org-id': orgId
+      },
+      body: JSON.stringify({
+        bill_id: bill.bill_id,
+        bill_number: bill.bill_number,
+        customer_name: bill.customer_name,
+        customer_phone: bill.customer_phone,
+        payment_amount: payment,
+        previous_due: currentDue,
+        new_due: newDueAmount,
+        payment_method: paymentMethod,
+        notes: notes || `Payment towards bill ${bill.bill_number}`,
+        created_by: userId
+      })
+    });
 
-      if (!paymentResponse.ok) {
-        console.warn('Payment record creation failed, but bill was updated');
-        // Continue anyway since bill was updated successfully
-      }
-    } catch (paymentError) {
-      console.warn('Failed to create payment record:', paymentError);
-      // Continue anyway since bill was updated successfully
+    if (!paymentResponse.ok) {
+      console.warn('Payment record creation failed, but bill was updated');
     }
 
     toast.success(`Payment of ₹${payment.toLocaleString('en-IN')} recorded successfully!`);

@@ -149,17 +149,20 @@ exports.getPayments = asyncHandler(async (req, res) => {
   const [payments] = await db.query(query, params);
 
   // Get summary statistics
-  const [summary] = await db.query(`
-    SELECT 
-      COUNT(*) as total_payments,
-      SUM(payment_amount) as total_amount,
-      COUNT(DISTINCT customer_phone) as unique_customers,
-      COUNT(DISTINCT payment_method) as payment_methods_used
-    FROM payments 
-    WHERE org_id = ?
-      ${start_date ? ' AND DATE(payment_date) >= ?' : ''}
-      ${end_date ? ' AND DATE(payment_date) <= ?' : ''}
-  `, [orgId, ...(start_date ? [start_date] : []), ...(end_date ? [end_date] : [])]);
+  // In your payment controller, update the summary query:
+const [summary] = await db.query(`
+  SELECT 
+    COUNT(*) as total_payments,
+    SUM(payment_amount) as total_amount,
+    COUNT(DISTINCT customer_phone) as unique_customers,
+    COUNT(DISTINCT payment_method) as payment_methods_used,
+    SUM(CASE WHEN previous_due = payment_amount THEN payment_amount ELSE 0 END) as total_initial,
+    SUM(CASE WHEN previous_due > payment_amount THEN payment_amount ELSE 0 END) as total_dues
+  FROM payments 
+  WHERE org_id = ?
+    ${start_date ? ' AND DATE(payment_date) >= ?' : ''}
+    ${end_date ? ' AND DATE(payment_date) <= ?' : ''}
+`, [orgId, ...(start_date ? [start_date] : []), ...(end_date ? [end_date] : [])]);
 
   res.json({
     success: true,
