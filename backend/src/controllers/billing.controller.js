@@ -465,10 +465,9 @@ const [bills] = await db.query(`
 const billData = {
   ...bills[0],
   items,
-  // Update this line to use the correct URL
-  qr_code_url: bills[0].qr_code_path ? 
-    `${req.protocol}://${req.get('host')}${bills[0].qr_code_path}` : 
-    null
+  qr_code_url: bills[0].qr_code_path
+    ? `${req.protocol}://${req.get('host')}${bills[0].qr_code_path}`
+    : null
 };
 
   res.json({

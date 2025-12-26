@@ -73,8 +73,9 @@ export function Home() {
   const [recentBills, setRecentBills] = useState([]);
   const [dailySalesData, setDailySalesData] = useState([]);
   const [billCountData, setBillCountData] = useState([]);
-  const API_BASE_URL = "http://localhost:5000/api";
+ 
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
     fetchDashboardData();
     fetchRecentBills();
@@ -782,77 +783,11 @@ export function Home() {
               </div>
             )}
           </CardBody>
+           
         </Card>
       </div>
       
-      {/* Quick Stats Row */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="border border-blue-gray-100 shadow-sm">
-          <CardBody className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <Typography variant="small" className="font-normal text-blue-gray-600">
-                  Average Bill Value
-                </Typography>
-                <Typography variant="h4" color="blue-gray" className="mt-1">
-                  {formatCurrency(dashboardData?.summary?.monthly?.average_bill_value || 0)}
-                </Typography>
-              </div>
-              <div className="rounded-full p-3 bg-gradient-to-tr from-cyan-600 to-cyan-400">
-                <ChartBarIcon className="h-6 w-6 text-white" />
-              </div>
-            </div>
-            <Typography variant="small" className="font-normal text-blue-gray-600 mt-4">
-              <span className="text-green-500">+2.5%</span> from last month
-            </Typography>
-          </CardBody>
-        </Card>
-
-        <Card className="border border-blue-gray-100 shadow-sm">
-          <CardBody className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <Typography variant="small" className="font-normal text-blue-gray-600">
-                  Total Customers
-                </Typography>
-                <Typography variant="h4" color="blue-gray" className="mt-1">
-                  {dashboardData?.summary?.customers?.total_customers || 0}
-                </Typography>
-              </div>
-              <div className="rounded-full p-3 bg-gradient-to-tr from-pink-600 to-pink-400">
-                <UserGroupIcon className="h-6 w-6 text-white" />
-              </div>
-            </div>
-            <Typography variant="small" className="font-normal text-blue-gray-600 mt-4">
-              <span className="text-green-500">+{dashboardData?.summary?.customers?.new_customers || 0}</span> new this month
-            </Typography>
-          </CardBody>
-        </Card>
-
-        <Card className="border border-blue-gray-100 shadow-sm">
-          <CardBody className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <Typography variant="small" className="font-normal text-blue-gray-600">
-                  Bills Collected
-                </Typography>
-                <Typography variant="h4" color="blue-gray" className="mt-1">
-                  {formatCurrency(dashboardData?.summary?.monthly?.total_collected || 0)}
-                </Typography>
-              </div>
-              <div className="rounded-full p-3 bg-gradient-to-tr from-amber-600 to-amber-400">
-                <BanknotesIcon className="h-6 w-6 text-white" />
-              </div>
-            </div>
-            <Typography variant="small" className="font-normal text-blue-gray-600 mt-4">
-              <span className="text-green-500">
-                {dashboardData?.summary?.monthly?.total_collected > 0 ? 
-                  Math.round((dashboardData.summary.monthly.total_collected / dashboardData.summary.monthly.total_sales) * 100) : 0}%
-              </span> collection rate
-            </Typography>
-          </CardBody>
-        </Card>
-      </div>
+      
     </div>
   );
 }

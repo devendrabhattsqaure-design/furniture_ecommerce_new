@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { FaRupeeSign } from "react-icons/fa";
 
 const BillCreate = () => {
   const navigate = useNavigate();
@@ -57,7 +58,7 @@ const BillCreate = () => {
     due_date: ''
   });
 
-  const API_BASE_URL = "http://localhost:5000/api";
+ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const getOrgId = () => {
     try {
@@ -314,6 +315,7 @@ const BillCreate = () => {
 
       if (response.ok) {
         toast.success("Bill created successfully!");
+        navigate('/dashboard/billing-management');
         if (data.data.qr_code_url) {
           setQrCodeUrl(data.data.qr_code_url);
           setShowQRModal(true);
@@ -342,6 +344,32 @@ const BillCreate = () => {
       cheque_number: '',
       bank_name: ''
     }));
+  };
+  const [errors, setErrors] = useState({});
+
+  const handlePhoneChange = (e) => {
+    const value = e.target.value.replace(/\D/g, ""); // allow only digits
+
+    // limit to 10 digits
+    if (value.length > 10) return;
+
+    setFormData((prev) => ({
+      ...prev,
+      customer_phone: value,
+    }));
+
+    // validation
+    if (value.length !== 10) {
+      setErrors((prev) => ({
+        ...prev,
+        customer_phone: "Phone number must be 10 digits",
+      }));
+    } else {
+      setErrors((prev) => ({
+        ...prev,
+        customer_phone: "",
+      }));
+    }
   };
 
   return (
@@ -385,9 +413,9 @@ const BillCreate = () => {
 
       <form onSubmit={handleSubmit} className="px-4 max-w-7xl mx-auto">
         {/* TOP SECTION: Customer Info & Products */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           {/* Left Column - Customer Information */}
-          <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border p-6">
+          <div className="bg-white rounded-xl shadow-sm border p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
                 <div className="p-2 bg-blue-50 rounded-lg">
@@ -416,18 +444,26 @@ const BillCreate = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <Phone className="w-4 h-4" />
-                  Phone Number
-                </label>
-                <input
-                  type="tel"
-                  value={formData.customer_phone}
-                  onChange={(e) => setFormData(prev => ({ ...prev, customer_phone: e.target.value }))}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
-                  placeholder="Phone number"
-                />
-              </div>
+      <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+        <Phone className="w-4 h-4" />
+        Phone Number
+      </label>
+
+      <input
+        type="tel"
+        value={formData.customer_phone}
+        onChange={handlePhoneChange}
+        className={`w-full px-4 py-2.5 border rounded-lg 
+          ${errors.customer_phone ? "border-red-500" : "border-gray-300"}`}
+        placeholder="Enter 10-digit phone number"
+      />
+
+      {errors.customer_phone && (
+        <p className="text-sm text-red-500 mt-1">
+          {errors.customer_phone}
+        </p>
+      )}
+    </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
@@ -442,25 +478,8 @@ const BillCreate = () => {
                   placeholder="Email address"
                 />
               </div>
-
-              <div className="md:col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-                  <MapPin className="w-4 h-4" />
-                  Address
-                </label>
-                <textarea
-                  value={formData.customer_address}
-                  onChange={(e) => setFormData(prev => ({ ...prev, customer_address: e.target.value }))}
-                  rows="2"
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
-                  placeholder="Customer address"
-                />
-              </div>
-            </div>
-
-            {/* GST Selection */}
-            <div className="mt-6 pt-6 border-t">
-              <h3 className="text-sm font-medium text-gray-700 mb-3">GST Options</h3>
+              <div>
+                <h3 className="text-sm font-medium text-gray-700 mb-3">GST Options</h3>
               <div className="flex items-center space-x-6">
                 <label className="flex items-center space-x-2 cursor-pointer">
                   <input
@@ -483,7 +502,25 @@ const BillCreate = () => {
                   <span className="text-gray-700">Without GST</span>
                 </label>
               </div>
+              </div>
+             
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
+                  <MapPin className="w-4 h-4" />
+                  Address
+                </label>
+                <textarea
+                  value={formData.customer_address}
+                  onChange={(e) => setFormData(prev => ({ ...prev, customer_address: e.target.value }))}
+                  rows="2"
+                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg"
+                  placeholder="Customer address"
+                />
+              </div>
             </div>
+
+            
           </div>
 
           {/* Right Column - Product Search */}
@@ -631,13 +668,13 @@ const BillCreate = () => {
         </div>
 
         {/* BOTTOM SECTION: Billing Calculation & Payment */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - Charges & Calculations */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border p-6">
+          <div className="bg-white rounded-xl shadow-sm border p-6">
+           
               <h2 className="text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2">
                 <div className="p-2 bg-purple-50 rounded-lg">
-                  <DollarSign className="w-5 h-5 text-purple-600" />
+                  <FaRupeeSign className="w-5 h-5 text-purple-600" />
                 </div>
                 Bill Calculation
               </h2>
@@ -654,7 +691,7 @@ const BillCreate = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1">
-                        <Percent className="w-4 h-4" />
+                        {/* <Percent className="w-4 h-4" /> */}
                         Discount (₹)
                       </label>
                       <input
@@ -813,13 +850,13 @@ const BillCreate = () => {
                     <span className="text-blue-600">₹{total.toLocaleString('en-IN')}</span>
                   </div>
                 </div>
-              </div>
+            
             </div>
           </div>
 
           {/* Right Column - Payment & Notes */}
-          <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border p-6">
+          <div className="bg-white rounded-xl shadow-sm border p-6">
+          
               <h2 className="text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2">
                 <div className="p-2 bg-green-50 rounded-lg">
                   <CreditCard className="w-5 h-5 text-green-600" />
@@ -990,7 +1027,7 @@ const BillCreate = () => {
                   </p>
                 </div>
               </div>
-            </div>
+           
           </div>
         </div>
       </form>

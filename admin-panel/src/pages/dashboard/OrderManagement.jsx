@@ -32,7 +32,7 @@ const OrderManagement = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
 
-  const API_BASE_URL = "http://localhost:5000/api";
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // Order status options
   const statusOptions = [
@@ -374,7 +374,7 @@ const handleDelete = async (orderId) => {
         </div>
 
         {/* Total Revenue */}
-        <div className="relative flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md">
+        {/* <div className="relative flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md">
           <div className="bg-clip-border mx-4 rounded-xl overflow-hidden bg-gradient-to-tr from-purple-600 to-purple-400 text-white shadow-purple-500/40 shadow-lg absolute -mt-4 grid h-16 w-16 place-items-center">
             <Truck className="w-6 h-6 text-white" />
           </div>
@@ -382,7 +382,7 @@ const handleDelete = async (orderId) => {
             <p className="text-sm text-gray-600 font-medium">Revenue</p>
             <h4 className="text-3xl font-bold text-gray-900">₹{stats.revenue.toFixed(2)}</h4>
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Order Management Table */}

@@ -4,7 +4,8 @@ import { FaRev, FaRupeeSign } from 'react-icons/fa'
 import { useLocation, useParams } from 'react-router-dom'
 
 const VendorViewPage = () => {
-    let API = 'http://localhost:5000/api'
+    const API = import.meta.env.VITE_API_BASE_URL
+    // let API = 'http://localhost:5000/api' --- IGNORE ---
     const [vendor,setVendor] = useState({})
     const [vendorItems,setVendorItems] = useState([])
     const [isExpense,setIsExpense] = useState(null)

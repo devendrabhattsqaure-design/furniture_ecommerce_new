@@ -138,7 +138,7 @@ export const getRoutes = (user) => {
       name: "notifications",
       path: "/notifications",
       element: <Notifications />,
-      show: userRole === 'super_admin',
+      show: true,
       category: "direct",
     },
     

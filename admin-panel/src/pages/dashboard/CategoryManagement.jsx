@@ -193,7 +193,7 @@ const CategoryManagement = () => {
   const [loading, setLoading] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
   const [orgId, setOrgId] = useState(null); 
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const [formData, setFormData] = useState({
     category_name: "",
     slug: "",
@@ -218,12 +218,13 @@ const CategoryManagement = () => {
 }, []);
 
 
+
  const fetchCategories = useCallback(async (orgId) => {
     if (!orgId) return;
     
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/categories", {
+      const res = await fetch(`${API_BASE_URL}/categories`, {
         headers: {
           'x-org-id': orgId,
           // If using JWT auth, include authorization header
@@ -321,7 +322,7 @@ const CategoryManagement = () => {
         fd.append("image", formData.image);
       }
 
-      const res = await fetch("http://localhost:5000/api/categories", {
+      const res = await fetch(`${API_BASE_URL}/categories`, {
         method: "POST",
         headers: {
           'x-org-id': orgId,
@@ -376,12 +377,12 @@ console.log(orgId, 'ORG IvfD');
     fd.append("org_id", orgId);
 
     const res = await fetch(
-      `http://localhost:5000/api/categories/${selectedCategory.category_id}`,
+      `${API_BASE_URL}/categories/${selectedCategory.category_id}`,
       {
         method: "PUT",
         headers: {
           "x-org-id": orgId
-        },
+        },  
         body: fd
       }
     );
@@ -417,7 +418,7 @@ console.log(orgId, 'ORG IvfD');
     }
 
     const res = await fetch(
-      `http://localhost:5000/api/categories/${selectedCategory.category_id}`,
+      `${API_BASE_URL}/categories/${selectedCategory.category_id}`,
       {
         method: "DELETE",
         headers: {

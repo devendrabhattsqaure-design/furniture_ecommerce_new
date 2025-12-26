@@ -42,9 +42,9 @@ const ProductViewPage = () => {
     printWindow.close();
   };
 
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     let getProduct = async()=>{
-      let res = await fetch(`http://localhost:5000/api/products/${id}`)
+      let res = await fetch(`${API_BASE_URL}/products/${id}`)
       let data = await res.json()
       console.log(data)
       setProduct(data.data)

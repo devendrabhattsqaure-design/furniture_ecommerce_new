@@ -5,6 +5,7 @@ import { ArrowLeft, Calendar, User, Mail, Phone, Cake, Clock, DollarSign, Trendi
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Target, Percent } from "lucide-react";
+import { FaRupeeSign } from "react-icons/fa";
 const UserDetailsPage = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
@@ -16,7 +17,7 @@ const UserDetailsPage = () => {
   const [loading, setLoading] = useState(true);
   const [fetchingData, setFetchingData] = useState(false);
 
-  const API_BASE_URL = "http://localhost:5000/api";
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     if (userId) {
@@ -158,7 +159,7 @@ const UserDetailsPage = () => {
                     record.status === 'present' ? 'bg-green-100 text-green-800' :
                     record.status === 'absent' ? 'bg-red-100 text-red-800' :
                     record.status === 'half_day' ? 'bg-yellow-100 text-yellow-800' :
-                    record.status === 'late' ? 'bg-orange-100 text-orange-800' :
+                    
                     'bg-blue-100 text-blue-800'
                   }`}>
                     {record.status.charAt(0).toUpperCase() + record.status.slice(1).replace('_', ' ')}
@@ -240,8 +241,8 @@ const UserDetailsPage = () => {
         case 'present': return 'bg-green-500';
         case 'absent': return 'bg-red-500';
         case 'half_day': return 'bg-yellow-500';
-        case 'late': return 'bg-orange-500';
-        case 'holiday': return 'bg-blue-500';
+        
+       
         default: return 'bg-gray-200';
       }
     };
@@ -253,8 +254,7 @@ const UserDetailsPage = () => {
         'present': 'Present',
         'absent': 'Absent',
         'half_day': 'Half Day',
-        'late': 'Late',
-        'holiday': 'Holiday'
+        
       }[attendanceData.status] || 'No Record';
       
       let tooltip = `${date} - ${statusText}`;
@@ -315,7 +315,7 @@ const UserDetailsPage = () => {
 
         {/* Legend */}
         <div className="mt-4 flex flex-wrap gap-2 justify-center">
-          {['present', 'absent', 'half_day', 'late', 'holiday'].map(status => (
+          {['present', 'absent', 'half_day'].map(status => (
             <div key={status} className="flex items-center gap-1">
               <div className={`w-3 h-3 rounded ${getStatusColor(status)}`}></div>
               <span className="text-xs text-gray-600">
@@ -350,7 +350,7 @@ const SalaryBreakdown = ({ summary, user }) => {
   return (
     <div className="bg-white rounded-lg border p-6">
       <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-        <DollarSign className="w-5 h-5" />
+        <FaRupeeSign className="w-5 h-5" />
         Monthly Salary Summary - {new Date(selectedYear, selectedMonth - 1).toLocaleString('default', { month: 'long', year: 'numeric' })}
       </h3>
       
@@ -359,7 +359,7 @@ const SalaryBreakdown = ({ summary, user }) => {
         {/* Base Salary */}
         <div className="bg-blue-50 rounded-lg p-4">
           <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="w-4 h-4 text-blue-600" />
+            <FaRupeeSign className="w-4 h-4 text-blue-600" />
             <span className="text-sm font-medium text-blue-800">Base Salary</span>
           </div>
           <p className="text-2xl font-bold text-blue-900">
@@ -414,7 +414,7 @@ const SalaryBreakdown = ({ summary, user }) => {
         {/* Final Salary */}
         <div className="bg-green-50 rounded-lg p-4 border-2 border-green-200">
           <div className="flex items-center gap-2 mb-2">
-            <DollarSign className="w-4 h-4 text-green-600" />
+            <FaRupeeSign className="w-4 h-4 text-green-600" />
             <span className="text-sm font-medium text-green-800">Final Salary</span>
           </div>
           <p className="text-2xl font-bold text-green-900">
@@ -607,7 +607,7 @@ const SalaryBreakdown = ({ summary, user }) => {
                   )}
                   {user.base_salary > 0 && (
                     <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4" />
+                      <FaRupeeSign className="w-4 h-4" />
                       <span>Base Salary: ₹{user.base_salary}</span>
                     </div>
                   )}

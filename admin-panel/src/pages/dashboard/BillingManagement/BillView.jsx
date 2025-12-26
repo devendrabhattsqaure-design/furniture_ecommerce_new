@@ -35,7 +35,7 @@ const BillView = () => {
   const [generatingPDF, setGeneratingPDF] = useState(false);
   const [showQrModal, setShowQrModal] = useState(false);
 
-  const API_BASE_URL = "http://localhost:5000/api";
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const getOrgId = () => {
     try {
@@ -110,10 +110,10 @@ const BillView = () => {
   };
 
   const downloadQRCode = () => {
-    if (!bill?.qr_code_url) return;
+    if (!bill?.qr_code_path) return;
     
     const link = document.createElement('a');
-    link.href = bill.qr_code_url;
+    link.href = bill.qr_code_path;
     link.download = `bill_${bill.bill_number}_qr.png`;
     document.body.appendChild(link);
     link.click();
@@ -141,9 +141,9 @@ const BillView = () => {
           
           <div className="text-center mb-6">
             <div className="bg-white p-6 rounded-lg border border-gray-200 mb-4">
-              {bill?.qr_code_url ? (
+              {bill?.qr_code_path ? (
                 <img 
-                  src={bill.qr_code_url} 
+                  src={bill.qr_code_path} 
                   alt="Bill QR Code" 
                   className="w-64 h-64 mx-auto"
                   onError={(e) => {
@@ -171,7 +171,7 @@ const BillView = () => {
           <div className="flex gap-3">
             <button
               onClick={downloadQRCode}
-              disabled={!bill?.qr_code_url}
+              disabled={!bill?.qr_code_path}
               className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 py-2.5 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Download QR
@@ -242,11 +242,11 @@ const BillView = () => {
       <div className="flex justify-between items-center">
         {/* QR Code in bottom left - 30x30 */}
         <div className="flex flex-col items-start">
-          {bill?.qr_code_url && (
+          {bill?.qr_code_path && (
             <>
               <div className="mb-1">
                 <img 
-                  src={bill.qr_code_url}
+                  src={bill.qr_code_path}
                   alt="Bill QR Code" 
                   className="w-[100px] h-[100px] cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => setShowQrModal(true)}
@@ -313,7 +313,9 @@ const BillView = () => {
           top: 0;
           left: 0;
           width: 210mm;
-          padding: 10mm 8mm;
+          padding: 1mm;
+          font-size: 11px;
+
           box-shadow: none !important;
           border: none !important;
         }
@@ -322,7 +324,7 @@ const BillView = () => {
         }
         @page {
           size: A4;
-          margin: 10mm;
+          margin: 2mm;
         }
       }
     `}</style>
@@ -331,11 +333,11 @@ const BillView = () => {
   // QR code for print
   const InvoiceQRForPrint = () => (
     <>
-      {bill?.qr_code_url && (
+      {bill?.qr_code_path && (
         <>
           <div className="hidden print:block qr-code-print">
             <img 
-              src={bill.qr_code_url} 
+              src={bill.qr_code_path} 
               alt="Bill QR Code" 
               className="w-[30px] h-[30px]"
               crossOrigin="anonymous"
@@ -441,9 +443,9 @@ const BillView = () => {
         body { 
           font-family: 'Arial', sans-serif; 
           margin: 0; 
-          padding: 20px; 
+          padding: 5px; 
           background: white;
-          font-size: 12px;
+          font-size: 11px;
           line-height: 1.4;
           color: #333;
         }
@@ -498,9 +500,9 @@ const BillView = () => {
     <body>
       <div class="container">
         <!-- QR Code for PDF -->
-        ${bill.qr_code_url ? `
+        ${bill.qr_code_path ? `
           <div class="qr-container">
-            <img src="${bill.qr_code_url}" alt="QR Code" />
+            <img src="${bill.qr_code_path}" alt="QR Code" />
             <div class="qr-text">Scan to verify</div>
           </div>
         ` : ''}
@@ -633,9 +635,9 @@ const BillView = () => {
         </div>
 
         {/* Invoice Template */}
-        <div id="invoice" className="bg-white rounded-lg shadow-lg border overflow-hidden mb-8">
+        <div id="invoice" className="bg-white rounded-lg shadow-lg border overflow-hidden mb-4">
           {/* Invoice Header */}
-          <div className="p-8 border-b border-gray-200">
+          <div className="p-4 border-b border-gray-200">
             <div className="flex justify-between items-start">
               {/* Company Info */}
               <div>
@@ -658,7 +660,7 @@ const BillView = () => {
           <InvoiceFooterWithQR />
               {/* Invoice Title */}
               <div className="text-right">
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">TAX INVOICE</h2>
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">TAX INVOICE</h2>
                 <div className="text-lg font-semibold text-gray-700">#{bill.bill_number}</div>
                 <div className="text-sm text-gray-600 mt-2">
                   <div>Date: {new Date(bill.created_at).toLocaleDateString('en-IN')}</div>
@@ -669,24 +671,24 @@ const BillView = () => {
           </div>
           
           {/* Billing Details */}
-          <div className="p-8 border-b border-gray-200">
+          <div className="p-2 border-b border-gray-200">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {/* Bill To */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-300">BILL TO:</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-3  border-b border-gray-300">BILL TO:</h3>
                 <div className="space-y-2">
                   <div className="text-lg font-semibold text-gray-900">{bill.customer_name}</div>
                   {bill.customer_phone && <div className="text-gray-600">📞 {bill.customer_phone}</div>}
                   {bill.customer_email && <div className="text-gray-600">✉️ {bill.customer_email}</div>}
                   {bill.customer_address && (
-                    <div className="text-gray-600 mt-2">{bill.customer_address}</div>
+                    <div className="text-gray-600 mt-1">{bill.customer_address}</div>
                   )}
                 </div>
               </div>
               
               {/* Invoice Details */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-3 pb-2 border-b border-gray-300">INVOICE DETAILS:</h3>
+                <h3 className="text-lg font-semibold text-gray-800 mb-3  border-b border-gray-300">INVOICE DETAILS:</h3>
                 <div className="space-y-2">
                   <div className="flex justify-between">
                     <span className="text-gray-600">Bill No:</span>
@@ -727,32 +729,32 @@ const BillView = () => {
           </div>
           
           {/* Items Table */}
-          <div className="p-8">
+          <div className="p-2">
             <table className="w-full border-collapse">
               <thead>
                 <tr className="bg-gray-50">
-                  <th className="border border-gray-300 p-3 text-left font-semibold text-gray-700">#</th>
-                  <th className="border border-gray-300 p-3 text-left font-semibold text-gray-700">DESCRIPTION</th>
-                  <th className="border border-gray-300 p-3 text-left font-semibold text-gray-700">SKU</th>
-                  <th className="border border-gray-300 p-3 text-left font-semibold text-gray-700">UNIT PRICE</th>
-                  <th className="border border-gray-300 p-3 text-left font-semibold text-gray-700">QUANTITY</th>
-                  <th className="border border-gray-300 p-3 text-left font-semibold text-gray-700">AMOUNT</th>
+                  <th className="border border-gray-300 p-2 text-left font-semibold text-gray-700">#</th>
+                  <th className="border border-gray-300 p-2 text-left font-semibold text-gray-700">DESCRIPTION</th>
+                  <th className="border border-gray-300 p-2 text-left font-semibold text-gray-700">SKU</th>
+                  <th className="border border-gray-300 p-2 text-left font-semibold text-gray-700">UNIT PRICE</th>
+                  <th className="border border-gray-300 p-2 text-left font-semibold text-gray-700">QUANTITY</th>
+                  <th className="border border-gray-300 p-2 text-left font-semibold text-gray-700">AMOUNT</th>
                 </tr>
               </thead>
               <tbody>
                 {bill.items?.map((item, index) => (
                   <tr key={item.bill_item_id} className="hover:bg-gray-50">
-                    <td className="border border-gray-300 p-3 text-center">{index + 1}</td>
-                    <td className="border border-gray-300 p-3">
+                    <td className="border border-gray-300 p-2 text-center">{index + 1}</td>
+                    <td className="border border-gray-300 p-2">
                       <div className="font-medium text-gray-900">{item.product_name}</div>
                       {item.description && (
                         <div className="text-sm text-gray-600 mt-1">{item.description}</div>
                       )}
                     </td>
-                    <td className="border border-gray-300 p-3">{item.sku || 'N/A'}</td>
-                    <td className="border border-gray-300 p-3">₹{parseFloat(item.unit_price).toFixed(2)}</td>
-                    <td className="border border-gray-300 p-3 text-center">{item.quantity}</td>
-                    <td className="border border-gray-300 p-3 font-medium">
+                    <td className="border border-gray-300 p-2">{item.sku || 'N/A'}</td>
+                    <td className="border border-gray-300 p-2">₹{parseFloat(item.unit_price).toFixed(2)}</td>
+                    <td className="border border-gray-300 p-2 text-center">{item.quantity}</td>
+                    <td className="border border-gray-300 p-2 font-medium">
                       ₹{parseFloat(item.total_price).toFixed(2)}
                     </td>
                   </tr>
@@ -762,7 +764,7 @@ const BillView = () => {
           </div>
           
           {/* Totals */}
-          <div className="p-8 border-t border-gray-200">
+          <div className="p-2 border-t border-gray-200 mr-4">
             <div className="flex justify-end">
               <div className="w-80">
                 <div className="space-y-2">
@@ -798,7 +800,7 @@ const BillView = () => {
                     </div>
                   )}
                   
-                  <div className="pt-4 border-t border-gray-300">
+                  <div className="pt-2 border-t border-gray-300">
                     <div className="flex justify-between text-lg font-bold">
                       <span>TOTAL AMOUNT</span>
                       <span >₹{parseFloat(bill.total_amount).toFixed(2)}</span>
@@ -818,12 +820,12 @@ const BillView = () => {
                       <span>₹{parseFloat(bill.due_amount || 0).toFixed(2)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between items-center">
+                  {/* <div className="flex justify-between items-center">
                     <span >PAYMENT METHOD</span>
                     <span className="font-medium flex items-center gap-1">
                       {bill.payment_method.toUpperCase()}
                     </span>
-                  </div>
+                  </div> */}
                   {bill.payment_method === 'cheque' && bill.cheque_number && (
                     <div className="flex justify-between">
                       <span>CHEQUE NO</span>

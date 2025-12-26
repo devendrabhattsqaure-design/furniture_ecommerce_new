@@ -18,8 +18,12 @@ const [formData, setFormData] = useState({
   image: null
 });
 const [preview, setPreview] = useState("");
+
+const  API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+
   const getAllSliders = async()=>{
-    let data = await  fetch(`http://localhost:5000/api/slider/${orgId}`, {
+    let data = await  fetch(`${API_BASE_URL}/slider/${orgId}`, {
         method: 'GET',
        })
        
@@ -109,8 +113,8 @@ const [preview, setPreview] = useState("");
       }
 
       const url = editingSlider 
-        ? `http://localhost:5000/api/slider/edit-slider/${editingSlider.banner_id}`
-        : 'http://localhost:5000/api/slider/add-slider';
+        ? `${API_BASE_URL}/slider/edit-slider/${editingSlider.banner_id}`
+        : `${API_BASE_URL}/slider/add-slider`;
       
       const method = editingSlider ? 'PUT' : 'POST';
 
@@ -169,7 +173,7 @@ const [preview, setPreview] = useState("");
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/slider/delete-slider/${slideId}`, {
+      const response = await fetch(`${API_BASE_URL}/slider/delete-slider/${slideId}`, {
         method: 'DELETE'
       });
       

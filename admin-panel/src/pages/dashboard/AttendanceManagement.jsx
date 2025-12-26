@@ -25,14 +25,14 @@ const AttendanceManagement = () => {
     attendances: []
   });
 
-  const API_BASE_URL = "http://localhost:5000/api";
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const statusOptions = [
     { value: 'present', label: 'Present', color: 'bg-green-100 text-green-800', icon: CheckCircle },
     { value: 'absent', label: 'Absent', color: 'bg-red-100 text-red-800', icon: XCircle },
     { value: 'half_day', label: 'Half Day', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
-    { value: 'late', label: 'Late', color: 'bg-orange-100 text-orange-800', icon: Clock },
-    { value: 'holiday', label: 'Holiday', color: 'bg-blue-100 text-blue-800', icon: Sun }
+    // { value: 'late', label: 'Late', color: 'bg-orange-100 text-orange-800', icon: Clock },
+    // { value: 'holiday', label: 'Holiday', color: 'bg-blue-100 text-blue-800', icon: Sun }
   ];
 
   // Fetch data on component mount

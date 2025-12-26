@@ -2,6 +2,8 @@ import { DollarSign, Edit2, Filter, PlusIcon, Search, Trash2, TrendingUp } from 
 import React, { useEffect, useState } from 'react'
 import { FaEdit, FaTrash } from "react-icons/fa";
 import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { FaRupeeSign } from 'react-icons/fa';
 
 const ExpenseManagement = () => {
    const [page, setPage] = useState(1);
@@ -38,8 +40,10 @@ const ExpenseManagement = () => {
 
     });
 
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   const fetchVendors = async()=>{
-    let res = await fetch(`http://localhost:5000/api/vendor/${orgId}`)
+    let res = await fetch(`${API_BASE_URL}/vendor/${orgId}`)
     let data = await res.json()
     console.log(data.vendors)
     setVendorSelect(data.vendors)
@@ -73,7 +77,7 @@ const ExpenseManagement = () => {
       }
       console.log(submitData  )
      try {
-      const res = await fetch(`http://localhost:5000/api/expenses/create-expense/${orgId}`, {
+      const res = await fetch(`${API_BASE_URL}/expenses/create-expense/${orgId}`, {
         method: "POST",
        
         body: submitData,
@@ -124,7 +128,7 @@ const ExpenseManagement = () => {
         submitData.append('bill_image', form.bill_image);
       }
      try {
-      const res = await fetch(`http://localhost:5000/api/expenses/edit/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/expenses/edit/${id}`, {
         method: "PUT",
         
         body: submitData,
@@ -158,7 +162,7 @@ const ExpenseManagement = () => {
   };
 
   const handleDelete = async(id)=>{
-     const res = await fetch(`http://localhost:5000/api/expenses/delete/${id}`, {
+     const res = await fetch(`${API_BASE_URL}/expenses/delete/${id}`, {
         method: "DELETE",
        
       });
@@ -174,7 +178,7 @@ const ExpenseManagement = () => {
 
     const fetchExpenses = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/expenses/${orgId}?page=${page}`);
+      const res = await fetch(`${API_BASE_URL}/expenses/${orgId}?page=${page}`);
       const data = await res.json();
       console.log(data)
 
@@ -237,7 +241,7 @@ const handleFilter = async (e) => {
 
   try {
     const res = await fetch(
-      `http://localhost:5000/api/expenses/filter-expense/${orgId}?date=${value}`
+      `${API_BASE_URL}/expenses/filter-expense/${orgId}?date=${value}`
     );
 
     const data = await res.json();
@@ -282,15 +286,13 @@ const getVendorsItems = async(e)=>{
   setForm({ ...form, [e.target.name]: e.target.value });
   // console.log(form.vendor_id)
   if(e.target.value){
-let res = await fetch(`http://localhost:5000/api/vendor/due/${e.target.value}`)
+let res = await fetch(`${API_BASE_URL}/vendor/due/${e.target.value}`)
   let data = await res.json()
   console.log(data)
   setVendorItems(data.vendors)
   }
-  
 
 }
-
   useEffect(()=>{
     let id = JSON.parse(localStorage.getItem('user')).org_id
       setOrgId(id)
@@ -301,14 +303,14 @@ let res = await fetch(`http://localhost:5000/api/vendor/due/${e.target.value}`)
   useEffect(()=>{
     const loadVendors = async () => {
     try {
-      let res = await fetch(`http://localhost:5000/api/vendor/${orgId}`);
+      let res = await fetch(`${API_BASE_URL}/vendor/${orgId}`);
       let data = await res.json();
       console.log("Vendors fetched:", data.vendors);
       setVendorSelect(data.vendors || []);
-       // Ensure it's always an array
+       
     } catch (error) {
       console.error("Error fetching vendors:", error);
-      setVendorSelect([]); // Set empty array on error
+      setVendorSelect([]); 
     }
   };
   loadVendors()
@@ -323,7 +325,7 @@ let res = await fetch(`http://localhost:5000/api/vendor/due/${e.target.value}`)
             <div className="bg-white rounded-lg shadow-md p-6">
               <div className="flex items-center justify-between mb-4">
                 <div className="p-2 bg-blue-100 rounded-lg">
-                  <DollarSign className="w-6 h-6 text-blue-600" />
+                  <FaRupeeSign className="w-6 h-6 text-blue-600" />
                 </div>
                 <span className="text-sm font-medium text-green-600">Today</span>
               </div>

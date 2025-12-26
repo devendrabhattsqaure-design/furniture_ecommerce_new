@@ -33,7 +33,7 @@ const UserManagement = () => {
   });
 
   const navigate = useNavigate();
-  const API_BASE_URL = "http://localhost:5000/api";
+ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     fetchUserOrganization();
@@ -537,7 +537,7 @@ let searchedUser = filteredUsers.filter((item) => {
             <Users className="w-6 h-6 text-white" />
           </div>
           <div className="p-6 text-right">
-            <p className="text-sm text-gray-600 font-medium">Total Users</p>
+            <p className="text-sm text-gray-600 font-medium">Total  Employee</p>
             <h4 className="text-3xl font-bold text-gray-900">{filteredUsers.length}</h4>
             <p className="text-xs text-gray-500 mt-1">
               {userOrg === null ? "All organizations" : "Your organization"}
@@ -555,15 +555,15 @@ let searchedUser = filteredUsers.filter((item) => {
                     <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                     <input
                       type="text"
-                      placeholder="Search Quotation By Customer Name..."
+                      placeholder="Search Employee By Customer Name..."
                       className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       value={searchTerm}
                       onChange={(e)=>setSearchTerm(e.target.value)}
                     />
                   </div>
-            <span className="text-sm text-gray-600">
+            {/* <span className="text-sm text-gray-600">
               {userOrg === null ? "Super Admin View" : "Organization Employee"}
-            </span>
+            </span> */}
 
             <button
               onClick={() => openModal()}

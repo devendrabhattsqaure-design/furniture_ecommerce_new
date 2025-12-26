@@ -5,6 +5,7 @@ import {
   FileText, Receipt, User, Phone, Clock,
   Wallet, CheckCircle, AlertCircle // Added new icons
 } from "lucide-react";
+import { FaRupeeSign } from "react-icons/fa";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
@@ -28,7 +29,7 @@ const BusinessReport = () => {
   });
   const [activeTab, setActiveTab] = useState('payments');
 
-  const API_BASE_URL = "http://localhost:5000/api";
+ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     fetchBusinessReport();
@@ -288,7 +289,7 @@ const BusinessReport = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer position="top-right" autoClose={2000} />
       
       {/* Header */}
       <div className="mb-8">
@@ -320,7 +321,7 @@ const BusinessReport = () => {
                 }`}
               >
                 <div className="flex items-center gap-2">
-                  <DollarSign className="w-4 h-4" />
+                  <FaRupeeSign className="w-4 h-4" />
                   All Payment Records
                 </div>
               </button>
@@ -516,7 +517,7 @@ const BusinessReport = () => {
       <span className="font-bold text-green-600 mr-4">
         {formatCurrency(
           filteredPayments.reduce((sum, payment) => 
-            sum + parseFloat(payment.payment_amount || 0), 0
+            sum + Math.ceil(payment.payment_amount || 0), 0
           )
         )}
       </span>
@@ -525,7 +526,7 @@ const BusinessReport = () => {
       <span className="font-bold text-red-600">
         {formatCurrency(
           filteredPayments.reduce((sum, payment) => 
-            sum + parseFloat(payment.new_due || 0), 0
+            sum + Math.ceil(payment.new_due || 0), 0
           )
         )}
       </span>
@@ -585,7 +586,7 @@ const BusinessReport = () => {
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               <span className="font-bold text-green-600">
-                                {formatCurrency(payment.payment_amount)}
+                                {formatCurrency(Math.ceil(payment.payment_amount))}
                               </span>
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
@@ -600,11 +601,11 @@ const BusinessReport = () => {
                               </span>
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-red-600">
-                              {formatCurrency(payment.previous_due)}
+                              {formatCurrency(Math.ceil(payment.previous_due))}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
                               <span className={`font-medium ${(parseFloat(payment.new_due) || 0) > 0 ? 'text-orange-600' : 'text-green-600'}`}>
-                                {formatCurrency(payment.new_due)}
+                                {formatCurrency(Math.ceil(payment.new_due))}
                               </span>
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap">
@@ -731,12 +732,12 @@ const BusinessReport = () => {
             <div className="bg-white rounded-lg shadow-md p-6 border-t-4 border-blue-500">
               <div className="flex items-center justify-between mb-4">
                 <div className="p-2 bg-blue-100 rounded-lg">
-                  <DollarSign className="w-6 h-6 text-blue-600" />
+                  <FaRupeeSign className="w-6 h-6 text-blue-600" />
                 </div>
                 <span className="text-sm font-medium text-green-600">Today</span>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-1">
-                {formatCurrency(reportData.summary.today.total_sales)}
+                {formatCurrency(Math.ceil(reportData.summary.today.total_sales))}
               </h3>
               <p className="text-gray-600">Total Sales</p>
               <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
@@ -746,7 +747,7 @@ const BusinessReport = () => {
                 </div>
                 <div>
                   <p className="text-gray-500">Collected</p>
-                  <p className="font-semibold">{formatCurrency(reportData.summary.today.total_collected)}</p>
+                  <p className="font-semibold">{formatCurrency(Math.ceil(reportData.summary.today.total_collected))}</p>
                 </div>
               </div>
             </div>
@@ -760,17 +761,17 @@ const BusinessReport = () => {
                 <span className="text-sm font-medium text-green-600">Monthly</span>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-1">
-                {formatCurrency(reportData.summary.monthly.total_sales)}
+                {formatCurrency(Math.ceil(reportData.summary.monthly.total_sales))}
               </h3>
               <p className="text-gray-600">Monthly Sales</p>
               <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
                 <div>
                   <p className="text-gray-500">Bills</p>
-                  <p className="font-semibold">{reportData.summary.monthly.total_bills}</p>
+                  <p className="font-semibold">{Math.ceil(reportData.summary.monthly.total_bills)}</p>
                 </div>
                 <div>
                   <p className="text-gray-500">Avg Bill</p>
-                  <p className="font-semibold">{formatCurrency(reportData.summary.monthly.average_bill_value)}</p>
+                  <p className="font-semibold">{formatCurrency(Math.ceil(reportData.summary.monthly.average_bill_value))}</p>
                 </div>
               </div>
             </div>
@@ -784,7 +785,7 @@ const BusinessReport = () => {
                 <span className="text-sm font-medium text-orange-600">Outstanding</span>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-1">
-                {formatCurrency(reportData.summary.dues.total_due_amount)}
+                {formatCurrency(Math.ceil(reportData.summary.dues.total_due_amount))}
               </h3>
               <p className="text-gray-600">Total Dues</p>
               <div className="mt-4 grid grid-cols-2 gap-2 text-sm">
@@ -818,7 +819,7 @@ const BusinessReport = () => {
                 </div>
                 <div>
                   <p className="text-gray-500">Avg Spend</p>
-                  <p className="font-semibold">{formatCurrency(reportData.summary.customers.average_spend)}</p>
+                  <p className="font-semibold">{formatCurrency(Math.ceil(reportData.summary.customers.average_spend))}</p>
                 </div>
               </div>
             </div>

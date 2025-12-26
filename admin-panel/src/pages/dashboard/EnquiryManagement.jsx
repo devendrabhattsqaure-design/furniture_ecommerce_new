@@ -1,4 +1,4 @@
-import { Delete, DeleteIcon, Edit2, LucideDelete, Trash2 } from "lucide-react";
+import { Delete, DeleteIcon, Edit2, Eye, LucideDelete, Trash2 } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { toast, ToastContainer } from "react-toastify";
 
@@ -19,11 +19,11 @@ const EnquiryManagement = () => {
     query:"",
     
   });
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   // Fetch enquiries from backend
   const fetchEnquiries = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/enquiry/${orgId}`);
+      const res = await fetch(`${API_BASE_URL}/enquiry/${orgId}`);
       const data = await res.json();
       console.log(data)
       setEnquiries(data.enquiry);
@@ -62,7 +62,7 @@ const EnquiryManagement = () => {
     e.preventDefault();
 
     try {
-      let URL = isEditing? `http://localhost:5000/api/enquiry/update/${isEditing}`: `http://localhost:5000/api/enquiry/create-enquiry/${orgId}`
+      let URL = isEditing? `${API_BASE_URL}/enquiry/update/${isEditing}`: `${API_BASE_URL}/enquiry/create-enquiry/${orgId}`
       let method = isEditing?'PUT':'POST'
       const res = await fetch(URL, {
         method,
@@ -95,7 +95,7 @@ const EnquiryManagement = () => {
   if (!confirmDelete) return;
 
   try {
-    const res = await fetch(`http://localhost:5000/api/enquiry/delete/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/enquiry/delete/${id}`, {
       method: "DELETE",
     });
 
@@ -182,7 +182,7 @@ const handleAddEnquiry = async()=>{
 
         <tbody className="bg-white divide-y divide-gray-200">
           {enquiries?.map((item,i) => (
-            <tr onClick={()=>{setViewEnquiry(item)}} className="hover:bg-gray-50 transition-colors" key={item.enquiry_id}>
+            <tr  className="hover:bg-gray-50 transition-colors" key={item.enquiry_id}>
               <td className='py-2 px-2 text-left'>{i+1}</td>
               <td className="py-2 px-2 text-left ">{new Date(item.created_at).toLocaleDateString()}</td>
               <td className='py-2 px-2 text-left'>{item.name}</td>
@@ -194,10 +194,16 @@ const handleAddEnquiry = async()=>{
              
               <td className='items-center'>
             <div className="flex items-center justify-center gap-2">
-                       
+                       <button
+                          onClick={() => setViewEnquiry(item)}
+                          className="text-green-600 hover:text-green-800 transition-colors"
+                          title="Edit Order"
+                        >
+                          <Eye className="w-5 h-5" />
+                        </button>
                         <button
                           onClick={() => handleEdit(item)}
-                          className="text-green-600 hover:text-green-800 transition-colors"
+                          className="text-blue-600 hover:text-green-800 transition-colors"
                           title="Edit Order"
                         >
                           <Edit2 className="w-5 h-5" />
@@ -356,6 +362,7 @@ const handleAddEnquiry = async()=>{
 </div>
       )}
     </div>
+
     {
       viewEnquiry&& <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
       {/* MODAL */}

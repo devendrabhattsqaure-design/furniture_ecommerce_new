@@ -14,6 +14,7 @@ import {
   Loader2,
   ArrowLeft
 } from "lucide-react";
+import { FaRupeeSign } from 'react-icons/fa';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import PaymentModal from "./components/PaymentModal";
@@ -27,7 +28,7 @@ const BillingManagement = () => {
   const [selectedBillForPayment, setSelectedBillForPayment] = useState(null);
   const navigate = useNavigate();
 
-  const API_BASE_URL = "http://localhost:5000/api";
+  const  API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const getOrgId = () => {
     try {
@@ -194,7 +195,7 @@ const BillingManagement = () => {
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-green-100 rounded-lg">
-              <DollarSign className="w-5 h-5 text-green-600" />
+              <FaRupeeSign className="w-5 h-5 text-green-600" />
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">Total Revenue</p>
@@ -222,7 +223,7 @@ const BillingManagement = () => {
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-green-100 rounded-lg">
-              <DollarSign className="w-5 h-5 text-green-600" />
+              <FaRupeeSign className="w-5 h-5 text-green-600" />
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">Total Collected</p>
@@ -236,7 +237,7 @@ const BillingManagement = () => {
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-red-100 rounded-lg">
-              <DollarSign className="w-5 h-5 text-red-600" />
+              <FaRupeeSign className="w-5 h-5 text-red-600" />
             </div>
             <div>
               <p className="text-sm font-medium text-gray-600">Total Dues</p>
@@ -352,7 +353,7 @@ const BillingManagement = () => {
                             onClick={() => openPaymentModal(bill)}
                             className="text-green-600 hover:text-green-800 text-sm flex items-center gap-1"
                           >
-                            <DollarSign className="w-4 h-4" />
+                            <FaRupeeSign className="w-4 h-4" />
                             Pay
                           </button>
                         )}

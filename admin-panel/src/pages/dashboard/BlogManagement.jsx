@@ -22,12 +22,12 @@ const BlogManagement = () => {
     meta_description: '',
     org_id:orgId
   });
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   // Fetch all posts
   const fetchPosts = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:5000/api/blog/${orgId}`);
+      const response = await fetch(`${API_BASE_URL}/blog/${orgId}`);
       const result = await response.json();
       
       if (result.success) {
@@ -150,8 +150,8 @@ const BlogManagement = () => {
       }
 
       const url = editingPost 
-        ? `http://localhost:5000/api/blog/${editingPost.post_id}`
-        : 'http://localhost:5000/api/blog';
+        ? `${API_BASE_URL}/blog/${editingPost.post_id}`
+        : `${API_BASE_URL}/blog`;
       
       const method = editingPost ? 'PUT' : 'POST';
 
@@ -228,7 +228,7 @@ const handleEdit = (post) => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/blog/${postId}`, {
+      const response = await fetch(`${API_BASE_URL}/blog/${postId}`, {
         method: 'DELETE'
       });
       
@@ -249,7 +249,7 @@ const handleEdit = (post) => {
   // Handle publish/unpublish
   const handleTogglePublish = async (postId, currentStatus) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/blog/${postId}/publish`, {
+      const response = await fetch(`${API_BASE_URL}/blog/${postId}/publish`, {
         method: 'PATCH'
       });
       

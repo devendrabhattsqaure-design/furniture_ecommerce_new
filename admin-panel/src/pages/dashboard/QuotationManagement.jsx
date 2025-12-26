@@ -32,9 +32,9 @@ const QuotationManagement = () => {
      const [products, setProducts] = useState([]);
      const [selectedQuotation, setSelectedQuotation] = useState(null);
 const pdfRef = useRef();
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const fetchCategory = async()=>{
-        const res = await fetch(`http://localhost:5000/api/categories`,
+        const res = await fetch(`${API_BASE_URL}/categories`,
           {headers: {
           // 'Authorization': `Bearer ${token}`,
           'x-org-id': orgId,
@@ -65,7 +65,7 @@ const handleSubmit = async(e)=>{
     
         try {
           const token = localStorage.getItem('token');
-          const response = await fetch(`http://localhost:5000/api/quotation/create/${orgId}`, {
+          const response = await fetch(`${API_BASE_URL}/quotation/create/${orgId}`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -123,7 +123,7 @@ const handleSubmit = async(e)=>{
       if (search) params.append('search', search);
       
 
-      const response = await fetch(`http://localhost:5000/api/quotation/search-quotation/${orgId}?${params}`, {
+      const response = await fetch(`${API_BASE_URL}/quotation/search-quotation/${orgId}?${params}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -180,7 +180,7 @@ const handleSubmit = async(e)=>{
       if (search) params.append('search', search);
       if (categoryId) params.append('category_id', categoryId);
 
-      const response = await fetch(`http://localhost:5000/api/bills/products/search?${params}`, {
+      const response = await fetch(`${API_BASE_URL}/bills/products/search?${params}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -265,7 +265,7 @@ setShowModal(false)
   const { subtotal, discount, tax, total } = calculateTotals();
 
 const fetchQuotations = async()=>{
-  const res = await fetch(`http://localhost:5000/api/quotation/${orgId}`)
+  const res = await fetch(`${API_BASE_URL}/quotation/${orgId}`)
   const data = await res.json();
   console.log(data)
   if(data.success){
@@ -283,7 +283,7 @@ const fetchQuotations = async()=>{
 const handleDownloadClick = async (quotationId) => {
   try {
     const res = await fetch(
-      `http://localhost:5000/api/quotation/download/${quotationId}`
+      `${API_BASE_URL}/quotation/download/${quotationId}`
     );
     const data = await res.json();
 

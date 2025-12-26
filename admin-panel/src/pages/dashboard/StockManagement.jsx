@@ -21,8 +21,9 @@ const ProductPage = () => {
     maxQty: ""
   });
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const fetchCategories = async () => {
-    const res = await fetch(`http://localhost:5000/api/stocks/categories/${orgId}`);
+    const res = await fetch(`${API_BASE_URL}/stocks/categories/${orgId}`);
     const data = await res.json();
     console.log(data)
     setCategoryList(data.categories);
@@ -32,7 +33,7 @@ const ProductPage = () => {
     const { category, minQty, maxQty } = filters;
 
     const res = await fetch(
-      `http://localhost:5000/api/stocks/${orgId}?page=${page}&category=${category}&minQty=${minQty}&maxQty=${maxQty}`
+      `${API_BASE_URL}/stocks/${orgId}?page=${page}&category=${category}&minQty=${minQty}&maxQty=${maxQty}`
     );
 
     const data = await res.json();
@@ -45,7 +46,7 @@ const ProductPage = () => {
 
   const handleLessStock = async()=>{
     const res = await fetch(
-      `http://localhost:5000/api/stocks/less-stock/${orgId}`
+      `${API_BASE_URL}/stocks/less-stock/${orgId}`
     );
 
     const data = await res.json();

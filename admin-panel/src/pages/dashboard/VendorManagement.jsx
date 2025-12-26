@@ -3,10 +3,10 @@ import { Edit2, Eye, PlusIcon, Trash2, User2 } from 'lucide-react'
 import { Warning } from 'postcss'
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { toast } from 'react-toastify'
+import { toast, ToastContainer } from 'react-toastify'
 
 const VendorManagement = () => {
-    let API = 'http://localhost:5000/api'
+    const API = import.meta.env.VITE_API_BASE_URL
      const navigate = useNavigate();
     const [vendors,setVendors] = useState([])
     const [orgId,setOrgId] = useState(JSON.parse(localStorage.getItem('user')).org_id)
@@ -18,7 +18,7 @@ const VendorManagement = () => {
         vendor_address:"",
         vendor_number:"",
         vendor_gstno:"",
-      
+        added_by:"",
         org_id:""
     })
 
@@ -28,7 +28,7 @@ const VendorManagement = () => {
 
     const handleSubmit = async(e)=>{
         e.preventDefault()
-        
+        console.log(formData)
         let url = editVendor? `${API}/vendor/update/${editVendor}`:`${API}/vendor/create`
         let method = editVendor?'PUT':'POST'
         let res = await fetch(url,{
@@ -43,7 +43,7 @@ const VendorManagement = () => {
         if(data.success){
             setShowModal(false)
             getAllVendors()
-            editVendor?alert("Vendor updated successfully"):alert("Vendor created successfully")
+            editVendor?toast.success("Vendor updated successfully"):toast.success("Vendor created successfully")
             setEditVendor(null)
         }
 
@@ -58,7 +58,7 @@ const VendorManagement = () => {
         vendor_address:vendor.vendor_address,
         vendor_number:vendor.vendor_number,
         vendor_gstno:vendor.vendor_gstno,
-        
+     
         })
     }
     const handleAdd = async(e)=>{
@@ -69,7 +69,7 @@ const VendorManagement = () => {
         vendor_address:"",
         vendor_number:"",
         vendor_gstno:"",
-      
+        
         org_id:orgId
         
     })
@@ -86,7 +86,8 @@ const VendorManagement = () => {
         let data = await res.json()
         if (data.success){
             getAllVendors()
-            alert("Vendor Deleted successfully")
+            toast.success("Vendor Deleted Successfully")
+            
         }
        
     }
@@ -108,6 +109,8 @@ const VendorManagement = () => {
     },[])
 
   return (
+    <>
+    <ToastContainer autoClose="2000"/>
     <div className='mt-12'>
       <div className="mb-8 grid gap-y-10 gap-x-6 md:grid-cols-2 xl:grid-cols-4">
         <div className="relative flex flex-col bg-clip-border rounded-xl bg-white text-gray-700 shadow-md">
@@ -140,22 +143,22 @@ const VendorManagement = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
+                 <th className="px-6 py-3 text-left text-md font-medium text-gray-900 uppercase tracking-wider">
                   S.No
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-md font-medium text-gray-900 uppercase tracking-wider">
                   Vendor Name
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-md font-medium text-gray-900 uppercase tracking-wider">
                   number
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-md font-medium text-gray-900 uppercase tracking-wider">
                   address
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-md font-medium text-gray-900 uppercase tracking-wider">
                   GST no.
                 </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-md font-medium text-gray-900 uppercase tracking-wider">
                   Action
                 </th>
                 
@@ -164,12 +167,12 @@ const VendorManagement = () => {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {vendors?.map((vendor,i) => (
-                <tr key={vendor.vendor_id} onClick={() => navigate(`/dashboard/vendor/${vendor.vendor_id}`, { state: vendor }) }>
-                   <td className="px-6 py-4 whitespace-nowrap">     
+                <tr key={vendor.vendor_id}>
+                   <td  className="px-6 py-4 whitespace-nowrap">     
                           {i+1}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">     
-                          {vendor.vendor_name}
+                  <td onClick={() => navigate(`/dashboard/vendor/${vendor.vendor_id}`)} className="px-6 py-4 whitespace-nowrap">     
+                          <span  style={{color:"blue",cursor:"pointer"}}>{vendor.vendor_name}</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                     {vendor.vendor_number}
@@ -180,13 +183,27 @@ const VendorManagement = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
                     {vendor.vendor_gstno}
                   </td>
-                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800">
+                   <td className="px-6 py-4  whitespace-nowrap text-sm text-gray-800">
                    <button
                           onClick={() => navigate(`/dashboard/vendor/${vendor.vendor_id}`)}
                           className="text-green-600 hover:text-green-800 transition-colors"
                           title="Edit Order"
                         >
                           <Eye className="w-5 h-5" />
+                        </button>
+                         <button
+                          onClick={() => handleEdit(vendor)}
+                          className="text-blue-600 ml-2 mr-2  transition-colors"
+                          title="Edit Order"
+                        >
+                          <Edit2 className="w-5 h-5" />
+                        </button>
+                         <button
+                          onClick={() => handleDelete(vendor.vendor_id)}
+                          className="text-red-600  transition-colors"
+                          title="Edit Order"
+                        >
+                          <Trash2 className="w-5 h-5" />
                         </button>
                 </td>
               
@@ -217,7 +234,7 @@ const VendorManagement = () => {
                     type="text"
                     name="vendor_name"
                     value={formData.vendor_name}
-                    onChange={handleInputChange}
+                    onChange={(e) => setFormData(prev => ({ ...prev, vendor_name: e.target.value.charAt(0).toUpperCase()+e.target.value.slice(1) }))}
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -227,13 +244,18 @@ const VendorManagement = () => {
                    Vendor Number *
                   </label>
                   <input
-                    inputMode="numeric"             // Mobile numeric keyboard
-                    
+                    inputMode="numeric" 
+                    type='tel'            // Mobile numeric keyboard
+                    pattern="\d{10}"
+                    // type='number'
                     maxLength={10}
                     minLength={10}
                     name="vendor_number"
                     value={formData.vendor_number}
-                    onChange={handleInputChange}
+                   onChange={(e) => {
+    const value = e.target.value.replace(/[^0-9]/g, ""); // Remove non-numeric
+    setFormData(prev => ({ ...prev, vendor_number: value }));
+  }}
                     required
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -264,18 +286,7 @@ const VendorManagement = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                 </div>
-                 {/* <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                   Added By
-                  </label>
-                  <input
-                    type="text"
-                    name="added_by"
-                    value={formData.added_by}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div> */}
+                
 
 
                 {/* Form Actions */}
@@ -302,6 +313,7 @@ const VendorManagement = () => {
       )}
 
     </div>
+    </>
   )
 }
 

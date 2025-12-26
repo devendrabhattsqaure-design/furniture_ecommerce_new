@@ -56,11 +56,11 @@ const ProductManagement = () => {
     getVendor(orgId)
   }
 }, []);
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   const fetchProducts = async (orgId) => {
     try {
-      const response = await fetch('http://localhost:5000/api/products', {
+      const response = await fetch(`${API_BASE_URL}/products`, {
         headers: {
           'x-org-id': orgId
         }
@@ -81,7 +81,7 @@ const ProductManagement = () => {
 
   const fetchCategories = async (orgId) => {
     try {
-      const response = await fetch('http://localhost:5000/api/categories', {
+      const response = await fetch(`${API_BASE_URL}/categories`, {
         headers: {
           'x-org-id': orgId
         }
@@ -124,8 +124,8 @@ console.log(formDataToSend)
       });
 
       const url = editingProduct 
-        ? `http://localhost:5000/api/products/${editingProduct.product_id}`
-        : 'http://localhost:5000/api/products';
+        ? `${API_BASE_URL}/products/${editingProduct.product_id}`
+        : `${API_BASE_URL}/products`;
       
       const method = editingProduct ? 'PUT' : 'POST';
 
@@ -224,7 +224,7 @@ console.log(formDataToSend)
  const handleEdit = async (product) => {
     try {
       // Fetch the complete product data with images
-      const response = await fetch(`http://localhost:5000/api/products/${product.product_id}`);
+      const response = await fetch(`${API_BASE_URL}/products/${product.product_id}`);
       const result = await response.json();
       
       if (result.success) {
@@ -310,7 +310,7 @@ console.log(formDataToSend)
   }
 
   try {
-    const response = await fetch(`http://localhost:5000/api/products/${productId}`, {
+    const response = await fetch(`${API_BASE_URL}/products/${productId}`, {
       method: 'DELETE',
     });
 
@@ -344,7 +344,7 @@ const calculateMarginAmount = (price, purchasePrice) => {
 
 
   const getVendor = async(orgId)=>{
-    let res = await fetch(`http://localhost:5000/api/vendor/${orgId}`)
+    let res = await fetch(`${API_BASE_URL}/vendor/${orgId}`)
     let data = await res.json()
     console.log(data)
     setVendors(data.vendors)
@@ -650,7 +650,7 @@ const calculateMarginAmount = (price, purchasePrice) => {
 </div>
 
                 {/* Compare Price */}
-                <div>
+                {/* <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Compare Price
                   </label>
@@ -662,7 +662,7 @@ const calculateMarginAmount = (price, purchasePrice) => {
                     onChange={handleInputChange}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                </div>
+                </div> */}
 
                 {/* Stock Quantity */}
                 <div>
@@ -776,7 +776,7 @@ const calculateMarginAmount = (price, purchasePrice) => {
                 </div>
 
                 {/* Short Description */}
-                <div className="md:col-span-2">
+                {/* <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Short Description
                   </label>
@@ -787,7 +787,7 @@ const calculateMarginAmount = (price, purchasePrice) => {
                     rows="2"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
-                </div>
+                </div> */}
 
                 {/* Description */}
                 <div className="md:col-span-2">

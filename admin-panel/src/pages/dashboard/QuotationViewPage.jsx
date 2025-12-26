@@ -7,12 +7,12 @@ const QuotationViewPage = ({quotationData}) => {
   const [company, setCompany] = useState({});
      const printRef = useRef();
     
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 //Fetch Company
 
 const fetchCompany = async()=>{
   const token = localStorage.getItem('token');
-  let res = await fetch(`http://localhost:5000/api/organizations/${quotationData.org_id}`,{
+  let res = await fetch(`${API_BASE_URL}/organizations/${quotationData.org_id}`,{
      headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -37,7 +37,7 @@ const fetchCompany = async()=>{
   const handleDownloadClick = async () => {
   try {
     const res = await fetch(
-      `http://localhost:5000/api/quotation/download/${quotationData.quotation_id}`
+      `${API_BASE_URL}/quotation/download/${quotationData.quotation_id}`
     );
     const data = await res.json();
 console.log(data)

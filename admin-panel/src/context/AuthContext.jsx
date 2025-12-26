@@ -22,6 +22,11 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, []);
 
+
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+ 
+
+
   const checkAuth = async () => {
     const token = localStorage.getItem('token');
     const userData = localStorage.getItem('user');
@@ -52,7 +57,7 @@ export const AuthProvider = ({ children }) => {
 
   const fetchOrganizationDetails = async (token, orgId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/organizations/${orgId}`, {
+      const response = await fetch(`${API_BASE_URL}/organizations/${orgId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -78,7 +83,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -123,7 +128,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (email, password, full_name, phone) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -171,7 +176,7 @@ export const AuthProvider = ({ children }) => {
     if (!token) return;
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/me', {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
