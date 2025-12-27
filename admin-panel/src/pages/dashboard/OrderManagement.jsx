@@ -32,7 +32,7 @@ const OrderManagement = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
 
-  const API_BASE_URL = "http://localhost:5000/api";
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // Order status options
   const statusOptions = [

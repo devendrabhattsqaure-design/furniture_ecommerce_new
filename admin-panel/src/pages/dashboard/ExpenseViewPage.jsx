@@ -8,9 +8,11 @@ const ExpenseViewPage = () => {
     const params = useParams()
     console.log(params)
     const [expense,setExpense] = useState({})
+
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
     const getExpense = async()=>{
       try {
-        const res = await fetch(`http://localhost:5000/api/expenses/view-expense/${params.id}`);
+        const res = await fetch(`${API_BASE_URL}/expenses/view-expense/${params.id}`);
       const data = await res.json();
       setExpense(data.expense)
 

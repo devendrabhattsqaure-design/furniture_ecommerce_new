@@ -39,7 +39,7 @@ export function DashboardNavbar() {
   const [layout, page] = pathname.split("/").filter((el) => el !== "");
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   // Fetch user data from localStorage on component mount
   useEffect(() => {
     
@@ -61,7 +61,7 @@ export function DashboardNavbar() {
       const token = localStorage.getItem('token');
       
       // Call logout API
-      const response = await fetch('http://localhost:5000/api/auth/logout', {
+      const response = await fetch(`${API_BASE_URL}/auth/logout`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -72,9 +72,9 @@ export function DashboardNavbar() {
       // Clear localStorage regardless of API response
       localStorage.removeItem('token');
       localStorage.removeItem('user');
-      
+      navigate('/auth/sign-in');
       // Clear any user state
-      setUser(null);
+      
       
       // Redirect to login page
       navigate('/auth/sign-in');
@@ -83,10 +83,11 @@ export function DashboardNavbar() {
       // Show success message
       if (response.ok) {
         console.log('Logged out successfully');
+        navigate('/auth/sign-in');
       }
     } catch (error) {
       console.error('Logout error:', error);
-      // Still clear localStorage and redirect even if API call fails
+     
       localStorage.removeItem('token');
       localStorage.removeItem('user');
       setUser(null);

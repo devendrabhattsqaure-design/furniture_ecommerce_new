@@ -67,7 +67,7 @@ export const getRoutes = (user) => {
       name: "dashboard",
       path: "/home",
       element: <Home />,
-      show: true,
+      show: ['admin', 'manager', ].includes(userRole),
       category: "direct",
     },
      enquiry: {
@@ -76,7 +76,7 @@ export const getRoutes = (user) => {
       name: "enquiry",
       path: "/enquiry",
       element: <EnquiryManagement />,
-      show: true,
+      show: ['admin', 'manager', ].includes(userRole),
       category: "direct", // Changed from reports to direct
     },
     billingManagement: {
@@ -84,7 +84,7 @@ export const getRoutes = (user) => {
       name: "billing management",
       path: "/billing-management",
       element: <BillingManagement />,
-      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      show: ['admin', 'manager', ].includes(userRole),
       category: "direct", // Changed from management to direct
     },
      orderManagement: {
@@ -92,7 +92,7 @@ export const getRoutes = (user) => {
       name: "order management",
       path: "/order-management",
       element: <OrderManagement />,
-      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      show: ['admin', 'manager', ].includes(userRole),
       category: "direct", // Changed from management to direct
     },
     
@@ -101,7 +101,7 @@ export const getRoutes = (user) => {
       name: "expense",
       path: "/expense",
       element: <ExpenseManagement />,
-      show: true,
+      show: ['admin', 'manager', ].includes(userRole),
       category: "direct", // Changed from reports to direct
     },
     vendor: {
@@ -109,7 +109,7 @@ export const getRoutes = (user) => {
       name: "vendor",
       path: "/vendor",
       element: <VendorManagement />,
-      show: true,
+      show: ['admin', 'manager', ].includes(userRole),
       category: "direct", // Changed from reports to direct
     },
     
@@ -118,7 +118,7 @@ export const getRoutes = (user) => {
       name: "quotation",
       path: "/quotation",
       element: <QuotationManagement />,
-      show: true,
+      show: ['admin', 'manager', ].includes(userRole),
       category: "direct", // Changed from reports to direct
     },
     
@@ -139,7 +139,7 @@ export const getRoutes = (user) => {
       name: "notifications",
       path: "/notifications",
       element: <Notifications />,
-      show: true,
+      show: ['admin', 'manager', ].includes(userRole),
       category: "direct",
     },
     
@@ -149,7 +149,7 @@ export const getRoutes = (user) => {
       name: "employee management",
       path: "/employee-management",
       element: <UserManagement />,
-      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      show: ['admin', 'manager', ].includes(userRole),
       category: "management",
     },
     
@@ -158,7 +158,7 @@ export const getRoutes = (user) => {
       name: "attendance management",
       path: "/attendance-management",
       element: <AttendanceManagement />,
-      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      show: ['admin', 'manager', ].includes(userRole),
       category: "management",
     },
     
@@ -167,7 +167,7 @@ export const getRoutes = (user) => {
       name: "category management",
       path: "/category-management",
       element: <CategoryManagement />,
-      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      show: ['admin', 'manager', ].includes(userRole),
       category: "management", // Changed from content to management
     },
     
@@ -176,7 +176,7 @@ export const getRoutes = (user) => {
       name: "product management",
       path: "/product-management",
       element: <ProductManagement />,
-      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      show: ['admin', 'manager', ].includes(userRole),
       category: "management", // Changed from content to management
     },
     
@@ -186,7 +186,7 @@ export const getRoutes = (user) => {
       name: "business report",
       path: "/business-report",
       element: <BusinessReport />,
-      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      show: ['admin', 'manager', ].includes(userRole),
       category: "reports",
     },
     
@@ -195,7 +195,7 @@ export const getRoutes = (user) => {
       name: "stocks",
       path: "/stocks",
       element: <StockManagement />,
-      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      show: ['admin', 'manager', ].includes(userRole),
       category: "reports",
     },
     
@@ -205,7 +205,7 @@ export const getRoutes = (user) => {
       name: "blog",
       path: "/blog",
       element: <BlogManagement />,
-      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      show: ['admin', 'manager', ].includes(userRole),
       category: "content",
     },
     
@@ -214,7 +214,7 @@ export const getRoutes = (user) => {
       name: "slider",
       path: "/slider",
       element: <SliderManagement />,
-      show: ['admin', 'manager', 'super_admin'].includes(userRole),
+      show: ['admin', 'manager', ].includes(userRole),
       category: "content",
     },
   };

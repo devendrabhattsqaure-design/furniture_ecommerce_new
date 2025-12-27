@@ -17,10 +17,10 @@ export function Notifications() {
   
      const {fetchNotifications,notifications} = useAuth()
    const [orgId, setOrgId] = useState(JSON.parse(localStorage.getItem('user')).org_id);
-
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
 const handleDelete = async(id)=>{
-  let res = await axios.put(`http://localhost:5000/api/notifications/delete/${id}`)
+  let res = await axios.put(`${API_BASE_URL}/notifications/delete/${id}`)
   let data = res.data
   if(data.success){
     // toast.success('')

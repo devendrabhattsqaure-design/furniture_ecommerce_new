@@ -43,8 +43,9 @@ const [toDate, setToDate] = useState("");
 
     });
 
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   const fetchVendors = async()=>{
-    let res = await fetch(`http://localhost:5000/api/vendor/${orgId}`)
+    let res = await fetch(`${API_BASE_URL}/vendor/${orgId}`)
     let data = await res.json()
     console.log(data.vendors)
     setVendorSelect(data.vendors)
@@ -78,7 +79,7 @@ const [toDate, setToDate] = useState("");
       }
       console.log(submitData  )
      try {
-      const res = await fetch(`http://localhost:5000/api/expenses/create-expense/${orgId}`, {
+      const res = await fetch(`${API_BASE_URL}/expenses/create-expense/${orgId}`, {
         method: "POST",
        
         body: submitData,
@@ -129,7 +130,7 @@ const [toDate, setToDate] = useState("");
         submitData.append('bill_image', form.bill_image);
       }
      try {
-      const res = await fetch(`http://localhost:5000/api/expenses/edit/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/expenses/edit/${id}`, {
         method: "PUT",
         
         body: submitData,
@@ -163,7 +164,7 @@ const [toDate, setToDate] = useState("");
   };
 
   const handleDelete = async(id)=>{
-     const res = await fetch(`http://localhost:5000/api/expenses/delete/${id}`, {
+     const res = await fetch(`${API_BASE_URL}/expenses/delete/${id}`, {
         method: "DELETE",
        
       });
@@ -179,7 +180,7 @@ const [toDate, setToDate] = useState("");
 
     const fetchExpenses = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/expenses/${orgId}?page=${page}`);
+      const res = await fetch(`${API_BASE_URL}/expenses/${orgId}?page=${page}`);
       const data = await res.json();
       console.log(data)
 
@@ -237,7 +238,7 @@ const handleFilter = async (e) => {
     if (searchTerm) params.append("search", searchTerm);
 
     const res = await fetch(
-      `http://localhost:5000/api/expenses/filter-expense/${orgId}?${params.toString()}`
+      `${API_BASE_URL}/expenses/filter-expense/${orgId}?${params.toString()}`
     );
   
   //
@@ -282,7 +283,7 @@ const getVendorsItems = async(e)=>{
   setForm({ ...form, [e.target.name]: e.target.value });
   // console.log(form.vendor_id)
   if(e.target.value){
-let res = await fetch(`http://localhost:5000/api/vendor/due/${e.target.value}`)
+let res = await fetch(`${API_BASE_URL}/vendor/due/${e.target.value}`)
   let data = await res.json()
   console.log(data)
   setVendorItems(data.vendors)
@@ -301,7 +302,7 @@ let res = await fetch(`http://localhost:5000/api/vendor/due/${e.target.value}`)
   useEffect(()=>{
     const loadVendors = async () => {
     try {
-      let res = await fetch(`http://localhost:5000/api/vendor/${orgId}`);
+      let res = await fetch(`${API_BASE_URL}/vendor/${orgId}`);
       let data = await res.json();
       console.log("Vendors fetched:", data.vendors);
       setVendorSelect(data.vendors || []);
