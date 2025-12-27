@@ -16,6 +16,7 @@ export const AuthProvider = ({ children }) => {
   const [organization, setOrganization] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
     checkAuth();
     // fetchNotifications()
@@ -50,7 +51,7 @@ export const AuthProvider = ({ children }) => {
   };
   const fetchOrganizationDetails = async (token, orgId) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/organizations/${orgId}`, {
+      const response = await fetch(`${API_BASE_URL}/organizations/${orgId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -72,14 +73,14 @@ export const AuthProvider = ({ children }) => {
     setOrganization(null);
   };
     const fetchNotifications = async (orgId) => {
-    const res = await axios.get(`http://localhost:5000/api/notifications/${orgId}`);
+    const res = await axios.get(`${API_BASE_URL}/notifications/${orgId}`);
     // console.log(res.data)
     setNotifications(res.data.data);
   };
 //  console.log(notifications)
   const login = async (email, password) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -119,7 +120,7 @@ export const AuthProvider = ({ children }) => {
   };
   const register = async (email, password, full_name, phone) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -160,7 +161,7 @@ export const AuthProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     if (!token) return;
     try {
-      const response = await fetch('http://localhost:5000/api/auth/me', {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
