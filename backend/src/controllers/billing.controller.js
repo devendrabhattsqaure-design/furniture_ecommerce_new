@@ -200,7 +200,7 @@ exports.createBill = asyncHandler(async (req, res) => {
     const month = String(now.getMonth() + 1).padStart(2, "0");
     const day = String(now.getDate()).padStart(2, "0");
     const random4 = Math.floor(1000 + Math.random() * 9000);
-    const orgPrefix = organization.org_name.substring(0, 3).toUpperCase();
+    const orgPrefix = organization.org_name.substring(1, 4).toUpperCase();
     return `${orgPrefix}-${year}${month}${day}-${random4}`;
   };
 
@@ -317,6 +317,37 @@ if (qrCodeDataURL) {
         [item.quantity, item.product_id, orgId]
       );
     }
+
+
+    //enter in order
+
+ const [orderResult] = await connection.query(
+      `INSERT INTO orders (
+        order_number, customer_name, customer_phone, customer_email, customer_address,
+        subtotal, discount_amount, tax_amount, total_amount,
+        shipping_amount, payment_method, transaction_id, org_id,
+        customer_notes,  payment_status,order_status
+      ) VALUES (?, ?, ?, ?, ?,?, ?, ?, ?, ?, ?, ?, ?,?, ?,?)`,
+      [
+        billNumber,
+        customer_name,
+        customer_phone || null,
+        customer_email || null,
+        customer_address || null,
+        subtotal.toFixed(2),
+        discount.toFixed(2),
+        tax.toFixed(2),
+        total_amount,
+        shipment.toFixed(2),     
+        payment_method || 'cash',
+        transaction_id || null,
+        orgId,
+        notes || null,
+        payment_status,
+        "confirmed"
+        
+      ]
+    );
 
     // Commit transaction
     await connection.commit();

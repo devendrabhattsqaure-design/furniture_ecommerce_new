@@ -4,13 +4,14 @@ const asyncHandler = require('express-async-handler');
 exports.createVendor = asyncHandler(async(req,res)=>{
     try {
         let {vendor_name,vendor_number,vendor_address,vendor_gstno,org_id} = req.body
+        // console.log(req.body)
         if(!vendor_name||!vendor_number){
             return res.status(400).json({
                 message:"All feilds are required",
                 success:false
             })
         }
-console.log(req.body)
+
        let ress= await db.query(`INSERT INTO vendors (vendor_name,vendor_number,vendor_address,vendor_gstno,org_id)
         VALUES(?,?,?,?,?)
         `,[
@@ -34,7 +35,7 @@ console.log(req.body)
 exports.updateVendor = asyncHandler(async(req,res)=>{
     let {id} = req.params
     try {
-        let {vendor_name,vendor_number,vendor_address,vendor_gstno} = req.body
+        let {vendor_name,vendor_number,vendor_address,vendor_gstno,added_by} = req.body
         console.log(req.body)
         let [vendors] = await db.query(`SELECT * FROM vendors where vendor_id=${id}`)
         if(vendors.length===0){
@@ -155,10 +156,29 @@ exports.getVendor= asyncHandler(async(req,res)=>{
 
 exports.getVendorItems= asyncHandler(async(req,res)=>{
     try {
-        let {id} = req.params
-        console.log(id)
+        // let {id} = req.params
+        // console.log(id)
 
-        let [vendors] = await db.query(`SELECT * FROM vendors_items where vendor_id=${id}`)
+        // let [vendors] = await db.query(`SELECT * FROM vendors_items where vendor_id=${id}`)
+         let { id } = req.params;
+  let { search } = req.query; 
+        let query = `
+    SELECT * FROM vendors_items
+    WHERE vendor_id = ?
+  `;
+
+  // If search exists, add filter condition
+  if (search && search.trim() !== "") {
+    query += ` AND sku LIKE ?`;
+  }
+
+  // Prepare values for parameterized query
+  const values = search && search.trim() !== ""
+    ? [id, `%${search}%`]
+    : [id];
+
+  // Fetch items
+  let [vendors] = await db.query(query, values);
         const [row] = await db.query(
   `SELECT SUM(product_due) AS total
    FROM vendors_items

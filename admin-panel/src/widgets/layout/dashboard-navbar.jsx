@@ -26,9 +26,13 @@ import {
   setOpenConfigurator,
   setOpenSidenav,
 } from "@/context";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
+import { Bell } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export function DashboardNavbar() {
+
+  const {fetchNotifications,notifications,setNotifications} = useAuth()
   const [controller, dispatch] = useMaterialTailwindController();
   const { fixedNavbar, openSidenav } = controller;
   const { pathname } = useLocation();
@@ -38,10 +42,13 @@ export function DashboardNavbar() {
 
   // Fetch user data from localStorage on component mount
   useEffect(() => {
+    
+    
     const userData = localStorage.getItem('user');
     if (userData) {
       try {
         setUser(JSON.parse(userData));
+        
       } catch (error) {
         console.error('Error parsing user data:', error);
       }
@@ -71,7 +78,7 @@ export function DashboardNavbar() {
       
       // Redirect to login page
       navigate('/auth/sign-in');
-        window.location.reload();
+        
       
       // Show success message
       if (response.ok) {
@@ -84,7 +91,7 @@ export function DashboardNavbar() {
       localStorage.removeItem('user');
       setUser(null);
       navigate('/auth/sign-in');
-        window.location.reload();
+        
     }
   };
 
@@ -131,6 +138,25 @@ export function DashboardNavbar() {
           <div style={{visibility:"hidden"}} className="mr-auto md:mr-4 md:w-56">
             <Input label="Search" />
           </div>
+        <button
+     
+      className="relative text-blue-600 hover:text-blue-800"
+    >
+      <Bell onClick={()=>navigate(`/dashboard/notifications`)} className="w-6 h-6" />
+
+      
+        <span className="
+          absolute -top-2 -right-2
+          bg-red-500 text-white
+          text-[10px] font-bold
+          px-1.5 py-0.5
+          rounded-full
+          min-w-[18px] text-center
+        ">
+        {notifications.length}
+        </span>
+      
+    </button>
           <IconButton
             variant="text"
             color="blue-gray"

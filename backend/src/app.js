@@ -57,6 +57,7 @@ app.use('/api/stocks',require('./routes/stock.routes'))
 app.use('/api/quotation',require('./routes/quotation.routes'))
 app.use('/api/payments',require('./routes/payment.routes'))
 app.use('/api/vendor',require('./routes/vendor.routes'))
+app.use('/api/notifications',require('./routes/notifications.routes'))
 
 app.use('/api/user-targets', require('./routes/target.routes'));
 

@@ -78,6 +78,38 @@ function addOneDay(sqlDate) {
   d.setDate(d.getDate() + 1);
   return d.toISOString().split("T")[0]; // returns YYYY-MM-DD
 }
+
+
+exports.getOneExpense = asyncHandler(async(req,res)=>{
+  let {id} = req.params
+  const [expenses] = await db.query(
+  `SELECT 
+      e.*,
+      v.vendor_name,
+      v.vendor_number,
+      v.vendor_address,
+      v.vendor_gstno,
+      vi.product_name,
+     
+      vi.product_price
+  FROM expenses e
+  LEFT JOIN vendors v 
+      ON e.vendor_id = v.vendor_id
+  LEFT JOIN vendors_items vi
+      ON e.vendor_id = vi.vendor_id
+  WHERE e.id = ?
+  ORDER BY e.expense_date DESC
+  `,
+  [id]
+);
+let expense = expenses[0]
+return res.status(200).json({
+  expense,
+  message:"Expense found successfully",
+  success:true
+})
+})
+
 exports.getExpenses= asyncHandler(async(req,res)=>{
   let {orgId} =req.params
   let page = Number(req.query.page) || 1;
@@ -94,7 +126,7 @@ exports.getExpenses= asyncHandler(async(req,res)=>{
     const [expenses]=   await db.query(
       `SELECT 
     e.*,
-      v.vendor_id,
+      v.vendor_name,
     v.vendor_number,
     v.vendor_address,
     v.vendor_gstno
@@ -171,8 +203,9 @@ exports.editExpense=asyncHandler(async(req,res)=>{
     // console.log(expense)
     const featured_image =req.file?req.file.path:null;
     let {expense_date,
-      vendor_name ,
+      vendor_id ,
       amount,
+      vendor_item,
       paid_by,
       category,
       service,
@@ -191,6 +224,7 @@ exports.editExpense=asyncHandler(async(req,res)=>{
     expense_date = ?,
     vendor_id = ?,
     amount = ?,
+    vendor_item=?,
     paid_by = ?,
     category = ?,
     service = ?,
@@ -201,8 +235,9 @@ exports.editExpense=asyncHandler(async(req,res)=>{
    WHERE id = ?`,
   [
     expense_date || expense.expense_date,
-    vendor_name || expense.vendor_name,
+    vendor_id || expense.vendor_id,
     amount || expense.amount,
+    vendor_item || expense.vendor_item,
     paid_by || expense.paid_by,
     category || expense.category,
     service || expense.service,
@@ -241,83 +276,94 @@ exports.deleteExpense=asyncHandler(async(req,res)=>{
 })
 
 exports.filterExpense=asyncHandler(async(req,res)=>{
-   const { date, search,  } = req.query;
+ const { fromDate, toDate, search } = req.query;
 const { orgId } = req.params;
 
 let page = Number(req.query.page) || 1;
 let limit = Number(req.query.limit) || 10;
 const offset = (page - 1) * limit;
 
+/* ---------------- WHERE CLAUSE ---------------- */
+let whereClause = ` WHERE org_id = ? `;
 let params = [orgId];
 
-let whereClause = `
-  WHERE org_id = ?
-`;
-
 // 📅 Date Filter
-if (date) {
-  whereClause += ` AND DATE(expense_date) = ? `;
-  params.push(date);
+if (fromDate && toDate) {
+  whereClause += ` AND expense_date BETWEEN ? AND ? `;
+  params.push(fromDate, toDate);
+} else if (fromDate) {
+  whereClause += ` AND expense_date >= ? `;
+  params.push(fromDate);
+} else if (toDate) {
+  whereClause += ` AND expense_date <= ? `;
+  params.push(toDate);
 }
 
-// 🔎 Search Filter
+// 🔍 Search Filter
 if (search && search.trim() !== "") {
   whereClause += `
-    AND (
-      vendor_id LIKE ? OR 
-      paid_by LIKE ?
-    )
+    AND (vendor_name LIKE ? OR paid_by LIKE ?)
   `;
   params.push(`%${search}%`, `%${search}%`);
 }
 
-
-
-
+/* ---------------- COUNT QUERY ---------------- */
 const [countResult] = await db.query(
-  `SELECT COUNT(*) as total FROM expenses ${whereClause}`,
+  `SELECT COUNT(*) AS total FROM expenses ${whereClause}`,
   params
 );
 
 const total = countResult[0].total;
 const totalPages = Math.ceil(total / limit);
 
-  const [rows] = await db.query(
-  `SELECT * FROM expenses 
+/* ---------------- DATA QUERY ---------------- */
+const [rows] = await db.query(
+  `SELECT *
+   FROM expenses
    ${whereClause}
    ORDER BY expense_date DESC
    LIMIT ? OFFSET ?`,
   [...params, limit, offset]
 );
 
-  const updatedRows = rows.map((item) => ({
-    ...item,
-    expense_date: addOneDay(item.expense_date),
-  }));
+const updatedRows = rows.map((item) => ({
+  ...item,
+  expense_date: addOneDay(item.expense_date),
+}));
 
-  const selectedDate = new Date(date);
+/* ---------------- TOTAL AMOUNT (FROM–TO) ---------------- */
+let totalParams = [orgId];
+let totalWhere = ` WHERE org_id = ? `;
 
-// extract month & year
-const month = selectedDate.getMonth() + 1; // JS months are 0-based
-const year = selectedDate.getFullYear();
-const [row] = await db.query(
-  `SELECT SUM(amount) AS today_total
+if (fromDate && toDate) {
+  totalWhere += ` AND expense_date BETWEEN ? AND ? `;
+  totalParams.push(fromDate, toDate);
+} else if (fromDate) {
+  totalWhere += ` AND expense_date >= ? `;
+  totalParams.push(fromDate);
+} else if (toDate) {
+  totalWhere += ` AND expense_date <= ? `;
+  totalParams.push(toDate);
+}
+
+const [totalRow] = await db.query(
+  `SELECT SUM(amount) AS total_amount
    FROM expenses
-   WHERE MONTH(expense_date) = ?
-     AND YEAR(expense_date) = ?
-     AND org_id = ?`,
-  [month, year, orgId]
+   ${totalWhere}`,
+  totalParams
 );
 
-const monthTotal = row[0].today_total || 0;
-// console.log(monthTotal)
-  res.status(200).json({
-    success: true,
-    monthTotal,
-    data: updatedRows,
-    filterTotal:totalPages||1,
-    page
-  });
+const totalAmount = totalRow[0].total_amount || 0;
+
+/* ---------------- RESPONSE ---------------- */
+res.status(200).json({
+  success: true,
+  totalAmount,        // ✅ from–to total
+  data: updatedRows,
+  totalPages,
+  page,
+});
+
 
 })
 
@@ -328,7 +374,7 @@ exports.getVendorExpenses= asyncHandler(async(req,res)=>{
     const [expenses]=   await db.query(
       `SELECT 
     e.*,
-      v.vendor_id,
+      v.vendor_name,
     v.vendor_number,
     v.vendor_address,
     v.vendor_gstno

@@ -32,7 +32,7 @@ const OrderManagement = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_BASE_URL = "http://localhost:5000/api";
 
   // Order status options
   const statusOptions = [
@@ -124,6 +124,7 @@ const fetchOrders = async () => {
         order.customer_email?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
+console.log(filtered,'sfdv');
 
     // Apply status filter
     if (statusFilter !== "all") {
@@ -502,9 +503,9 @@ const handleDelete = async (orderId) => {
                         <div className="font-medium text-gray-900">
                           #{order.order_number}
                         </div>
-                        <div className="text-sm text-gray-500">
+                        {/* <div className="text-sm text-gray-500">
                           {order.items?.length || 0} items
-                        </div>
+                        </div> */}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -513,7 +514,7 @@ const handleDelete = async (orderId) => {
                           {order.customer_name || order.user?.full_name || 'N/A'}
                         </div>
                         <div className="text-sm text-gray-500">
-                          {order.customer_email || order.user?.email || 'N/A'}
+                          {order.customer_phone || order.user?.email || 'N/A'}
                         </div>
                       </div>
                     </td>
@@ -536,13 +537,13 @@ const handleDelete = async (orderId) => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <button
+                        {/* <button
                           onClick={() => openDetailsModal(order)}
                           className="text-blue-600 hover:text-blue-800 transition-colors"
                           title="View Details"
                         >
                           <Eye className="w-5 h-5" />
-                        </button>
+                        </button> */}
                         <button
                           onClick={() => openEditModal(order)}
                           className="text-green-600 hover:text-green-800 transition-colors"
@@ -637,18 +638,18 @@ const handleDelete = async (orderId) => {
       {isDetailsModalOpen && selectedOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
-            <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
+            {/* <div className="p-6 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
               <h3 className="text-2xl font-bold text-gray-800">
                 Order Details - #{selectedOrder.order_number}
               </h3>
               <button onClick={closeModal} className="text-gray-500 hover:text-gray-700">
                 <X className="w-6 h-6" />
               </button>
-            </div>
+            </div> */}
 
             <div className="p-6">
               {/* Order Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              {/* <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                 <div>
                   <h4 className="font-semibold text-gray-800 mb-3">Customer Information</h4>
                   <div className="space-y-2 text-sm">
@@ -671,10 +672,10 @@ const handleDelete = async (orderId) => {
                     <p><strong>Payment Method:</strong> {selectedOrder.payment_method || 'N/A'}</p>
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* Order Items */}
-              <div className="mb-6">
+              {/* <div className="mb-6">
                 <h4 className="font-semibold text-gray-800 mb-3">Order Items</h4>
                 <div className="border border-gray-200 rounded-lg overflow-hidden">
                   <table className="min-w-full divide-y divide-gray-200">
@@ -708,10 +709,10 @@ const handleDelete = async (orderId) => {
                     </tbody>
                   </table>
                 </div>
-              </div>
+              </div> */}
 
               {/* Order Totals */}
-              <div className="flex justify-end">
+              {/* <div className="flex justify-end">
                 <div className="w-64">
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between">
@@ -732,7 +733,7 @@ const handleDelete = async (orderId) => {
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         </div>

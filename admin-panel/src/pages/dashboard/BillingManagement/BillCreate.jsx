@@ -58,7 +58,7 @@ const BillCreate = () => {
     due_date: ''
   });
 
- const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const API_BASE_URL = "http://localhost:5000/api";
 
   const getOrgId = () => {
     try {
@@ -81,6 +81,7 @@ const BillCreate = () => {
       
       if (response.ok) {
         const data = await response.json();
+        console.log(data.data)
         setOrganization(data.organization);
         if (data.data.gst_type) {
           setFormData(prev => ({ ...prev, gst_type: data.data.gst_type }));

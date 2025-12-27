@@ -48,6 +48,7 @@ import QuotationManagement from "./pages/dashboard/QuotationManagement";
 import VendorManagement from "./pages/dashboard/VendorManagement";
 import VendorViewPage from "./pages/dashboard/VendorViewPage";
 import ProductViewPage from "./pages/dashboard/ProductViewPage";
+import ExpenseViewPage from "./pages/dashboard/ExpenseViewPage";
 
 
 const icon = {
@@ -257,6 +258,12 @@ export const hiddenRoutes = [
     name: "productviewpage",
     path: "/product-management/:id",
     element: <ProductViewPage />,
+  },
+   {
+    icon: <InformationCircleIcon {...icon} />,
+    name: "expenseviewpage",
+    path: "/expense/:id",
+    element: <ExpenseViewPage />,
   },
 ];
 

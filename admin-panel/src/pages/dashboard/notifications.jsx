@@ -7,8 +7,32 @@ import {
   CardBody,
 } from "@material-tailwind/react";
 import { InformationCircleIcon } from "@heroicons/react/24/outline";
+import axios from "axios";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { X } from "lucide-react";
+import { toast, ToastContainer } from "react-toastify";
 
 export function Notifications() {
+  
+     const {fetchNotifications,notifications} = useAuth()
+   const [orgId, setOrgId] = useState(JSON.parse(localStorage.getItem('user')).org_id);
+
+
+const handleDelete = async(id)=>{
+  let res = await axios.put(`http://localhost:5000/api/notifications/delete/${id}`)
+  let data = res.data
+  if(data.success){
+    // toast.success('')
+    fetchNotifications(orgId)
+  }
+}
+
+  useEffect(() => {
+    fetchNotifications(orgId);
+    // console.log(notifications)
+   
+  }, []);
   const [showAlerts, setShowAlerts] = React.useState({
     blue: true,
     green: true,
@@ -24,6 +48,8 @@ export function Notifications() {
   const alerts = ["gray", "green", "orange", "red"];
 
   return (
+    <>
+    <ToastContainer autoClose="1000" />
     <div className="mx-auto my-20 flex max-w-screen-lg flex-col gap-8">
       <Card>
         <CardHeader
@@ -36,52 +62,34 @@ export function Notifications() {
             Alerts
           </Typography>
         </CardHeader>
-        <CardBody className="flex flex-col gap-4 p-4">
-          {alerts.map((color) => (
-            <Alert
-              key={color}
-              open={showAlerts[color]}
-              color={color}
-              onClose={() => setShowAlerts((current) => ({ ...current, [color]: false }))}
+        <CardBody className="flex flex-col gap-4 p-4 bg-gray-300">
+          {notifications?.map((item) => (
+            <div
+              
+              className="bg-orange-800 w-full p-4 border rounded-md"
+           
             >
-              A simple {color} alert with an <a href="#">example link</a>. Give
-              it a click if you like.
-            </Alert>
+              <div  className="flex w-full justify-between  items-center ">
+                <div className="flex flex-col ">
+              <h4 className="text-gray-900">{item.title}</h4>
+              
+             <p className="text-white text-sm"> {item.message}</p>
+                </div>
+               <X onClick={()=>handleDelete(item.id)} className="text-black cursor-pointer"/>
+              </div>
+             
+            </div>
           ))}
         </CardBody>
       </Card>
       <Card>
-        <CardHeader
-          color="transparent"
-          floated={false}
-          shadow={false}
-          className="m-0 p-4"
-        >
-          <Typography variant="h5" color="blue-gray">
-            Alerts with Icon
-          </Typography>
-        </CardHeader>
-        <CardBody className="flex flex-col gap-4 p-4">
-          {alerts.map((color) => (
-            <Alert
-              key={color}
-              open={showAlertsWithIcon[color]}
-              color={color}
-              icon={
-                <InformationCircleIcon strokeWidth={2} className="h-6 w-6" />
-              }
-              onClose={() => setShowAlertsWithIcon((current) => ({
-                ...current,
-                [color]: false,
-              }))}
-            >
-              A simple {color} alert with an <a href="#">example link</a>. Give
-              it a click if you like.
-            </Alert>
-          ))}
-        </CardBody>
+       
+         
       </Card>
     </div>
+    </>
+    
+   
   );
 }
 

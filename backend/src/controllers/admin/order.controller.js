@@ -11,32 +11,21 @@ exports.getAllOrders = asyncHandler(async (req, res) => {
 
   let query = `
     SELECT 
-      o.*,
-      u.full_name as customer_name,
-      u.email as customer_email,
-      u.phone as customer_phone,
-      ua.address_line1,
-      ua.city,
-      ua.postal_code,
-      org.org_name as organization_name
-    FROM orders o
-    LEFT JOIN users u ON o.user_id = u.user_id
-    LEFT JOIN user_addresses ua ON o.shipping_address_id = ua.address_id
-    LEFT JOIN organizations org ON o.org_id = org.org_id
-    WHERE o.org_id = ?  -- Filter by organization ID
+     * FROM orders
+    WHERE org_id = ?  -- Filter by organization ID
   `;
   const params = [orgId];
 
   if (status && status !== 'all') {
-    query += ' AND o.order_status = ?';
+    query += ' AND order_status = ?';
     params.push(status);
   }
   if (search) {
-    query += ' AND (o.order_number LIKE ? OR u.full_name LIKE ? OR u.email LIKE ?)';
+    query += ' AND (order_number LIKE ? OR customer_name LIKE ? OR customer_email LIKE ?)';
     params.push(`%${search}%`, `%${search}%`, `%${search}%`);
   }
 
-  query += ' ORDER BY o.created_at DESC LIMIT ? OFFSET ?';
+  query += ' ORDER BY created_at DESC LIMIT ? OFFSET ?';
   params.push(parseInt(limit), parseInt(offset));
 
   const [orders] = await db.query(query, params);

@@ -1,17 +1,20 @@
-import { DollarSign, Edit2, Filter, PlusIcon, Search, Trash2, TrendingUp } from 'lucide-react';
+import { DollarSign, Edit2, Eye, Filter, PlusIcon, Search, Trash2, TrendingUp } from 'lucide-react';
 import React, { useEffect, useState } from 'react'
-import { FaEdit, FaTrash } from "react-icons/fa";
+import { FaEdit, FaRubleSign, FaRupeeSign, FaTrash } from "react-icons/fa";
 import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import { FaRupeeSign } from 'react-icons/fa';
+import ExpenseViewPage from './ExpenseViewPage';
+import { useNavigate } from 'react-router-dom';
 
 const ExpenseManagement = () => {
+  const navigate = useNavigate()
    const [page, setPage] = useState(1);
    const [filterPage, setFilterPage] = useState(null);
    const [filterTotalPage, setFilterTotalPage] = useState(null);
    const [totalPage, setTotalPage] = useState(1);
      const [expense, setExpense] = useState([]);
-       // Edit Modal State
+     const [viewExpense, setViewExpense] = useState(null);
+      const [fromDate, setFromDate] = useState("");
+const [toDate, setToDate] = useState("");
   const [editItem, setEditItem] = useState(null);
     const [addItem, setAddItem] = useState(null);
     const [expenseTotal, setExpenseTotal] = useState(0);
@@ -40,10 +43,8 @@ const ExpenseManagement = () => {
 
     });
 
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
   const fetchVendors = async()=>{
-    let res = await fetch(`${API_BASE_URL}/vendor/${orgId}`)
+    let res = await fetch(`http://localhost:5000/api/vendor/${orgId}`)
     let data = await res.json()
     console.log(data.vendors)
     setVendorSelect(data.vendors)
@@ -77,7 +78,7 @@ const ExpenseManagement = () => {
       }
       console.log(submitData  )
      try {
-      const res = await fetch(`${API_BASE_URL}/expenses/create-expense/${orgId}`, {
+      const res = await fetch(`http://localhost:5000/api/expenses/create-expense/${orgId}`, {
         method: "POST",
        
         body: submitData,
@@ -128,7 +129,7 @@ const ExpenseManagement = () => {
         submitData.append('bill_image', form.bill_image);
       }
      try {
-      const res = await fetch(`${API_BASE_URL}/expenses/edit/${id}`, {
+      const res = await fetch(`http://localhost:5000/api/expenses/edit/${id}`, {
         method: "PUT",
         
         body: submitData,
@@ -162,7 +163,7 @@ const ExpenseManagement = () => {
   };
 
   const handleDelete = async(id)=>{
-     const res = await fetch(`${API_BASE_URL}/expenses/delete/${id}`, {
+     const res = await fetch(`http://localhost:5000/api/expenses/delete/${id}`, {
         method: "DELETE",
        
       });
@@ -178,7 +179,7 @@ const ExpenseManagement = () => {
 
     const fetchExpenses = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/expenses/${orgId}?page=${page}`);
+      const res = await fetch(`http://localhost:5000/api/expenses/${orgId}?page=${page}`);
       const data = await res.json();
       console.log(data)
 
@@ -226,23 +227,20 @@ setExpense(searchedUser)
 
 
 const handleFilter = async (e) => {
-  const value = e.target.value; // YYYY-MM
 
-  if (value === "") {
-    setFilter({ month: "" });
-    setFilterPage(null);
-    setFilterTotalPage(null);
-    fetchExpenses();
-    return;
-  }
+ let params = new URLSearchParams({
+      page,
+    });
 
-  
-  setFilter(value);
+    if (fromDate) params.append("fromDate", fromDate);
+    if (toDate) params.append("toDate", toDate);
+    if (searchTerm) params.append("search", searchTerm);
 
-  try {
     const res = await fetch(
-      `${API_BASE_URL}/expenses/filter-expense/${orgId}?date=${value}`
+      `http://localhost:5000/api/expenses/filter-expense/${orgId}?${params.toString()}`
     );
+  
+  //
 
     const data = await res.json();
 
@@ -250,11 +248,9 @@ const handleFilter = async (e) => {
       setExpense(data.data);
       setFilterPage(data.page);
       setFilterTotalPage(data.filterTotal);
-      setMonthTotal(data.monthTotal)
+      setMonthTotal(data.totalAmount)
     }
-  } catch (err) {
-    console.error("Error fetching expenses", err);
-  }
+ 
 };
 ;
 const handleImageSelect = (e) => {
@@ -286,13 +282,15 @@ const getVendorsItems = async(e)=>{
   setForm({ ...form, [e.target.name]: e.target.value });
   // console.log(form.vendor_id)
   if(e.target.value){
-let res = await fetch(`${API_BASE_URL}/vendor/due/${e.target.value}`)
+let res = await fetch(`http://localhost:5000/api/vendor/due/${e.target.value}`)
   let data = await res.json()
   console.log(data)
   setVendorItems(data.vendors)
   }
+  
 
 }
+
   useEffect(()=>{
     let id = JSON.parse(localStorage.getItem('user')).org_id
       setOrgId(id)
@@ -303,14 +301,14 @@ let res = await fetch(`${API_BASE_URL}/vendor/due/${e.target.value}`)
   useEffect(()=>{
     const loadVendors = async () => {
     try {
-      let res = await fetch(`${API_BASE_URL}/vendor/${orgId}`);
+      let res = await fetch(`http://localhost:5000/api/vendor/${orgId}`);
       let data = await res.json();
       console.log("Vendors fetched:", data.vendors);
       setVendorSelect(data.vendors || []);
-       
+       // Ensure it's always an array
     } catch (error) {
       console.error("Error fetching vendors:", error);
-      setVendorSelect([]); 
+      setVendorSelect([]); // Set empty array on error
     }
   };
   loadVendors()
@@ -330,7 +328,7 @@ let res = await fetch(`${API_BASE_URL}/vendor/due/${e.target.value}`)
                 <span className="text-sm font-medium text-green-600">Today</span>
               </div>
               
-              <p className="text-gray-600">Total Expense</p>
+              <p className="text-gray-600">Today Expense</p>
               <div className="mt-4  text-md">
                 <div>
                   
@@ -376,8 +374,50 @@ let res = await fetch(`${API_BASE_URL}/vendor/due/${e.target.value}`)
         
         
         <div className="mt-4 flex flex-wrap gap-2">
-                    {/* Status Filter */}
-                    <div className="flex items-center gap-2">
+            <input
+  type="text"
+  className="border px-3 py-1 rounded"
+  value={searchTerm}
+  placeholder='Search By Vendor Name'
+  onChange={(e) => setSearchTerm(e.target.value)}
+/>
+                  <input
+  type="date"
+  className="border px-3 py-1 rounded"
+  value={fromDate}
+  onChange={(e) => setFromDate(e.target.value)}
+/>
+
+<input
+  type="date"
+  className="border px-3 py-1 rounded"
+  value={toDate}
+  onChange={(e) => setToDate(e.target.value)}
+/>
+
+<button
+  onClick={() => {
+    setPage(1);
+    handleFilter();
+  }}
+  className="bg-blue-600 text-white px-4 py-1 rounded"
+>
+  Apply
+</button>
+
+<button
+  onClick={() => {
+    setFromDate("");
+    setToDate("");
+    setPage(1);
+    fetchExpenses();
+  }}
+  className="bg-gray-500 text-white px-4 py-1 rounded"
+>
+  Reset
+</button>
+
+                    {/* <div className="flex items-center gap-2">
                       <Filter className="w-4 h-4 text-gray-500" />
                      
                     </div>
@@ -397,7 +437,7 @@ let res = await fetch(`${API_BASE_URL}/vendor/due/${e.target.value}`)
                   />
 
                   
-                     </div>
+                     </div> */}
                    
             
                   </div>
@@ -435,7 +475,14 @@ let res = await fetch(`${API_BASE_URL}/vendor/due/${e.target.value}`)
              
               <td className='items-center'>
             <div className="flex items-center justify-center gap-2">
-                       
+                       <button
+  onClick={() =>
+  navigate(`/dashboard/expense/${item.id}`)
+}
+  className="text-blue-600 hover:text-blue-800"
+>
+  <Eye/>
+</button>
                         <button
                           onClick={() => handleEdit(item)}
                           className="text-green-600 hover:text-green-800 transition-colors"
@@ -721,6 +768,7 @@ let res = await fetch(`${API_BASE_URL}/vendor/due/${e.target.value}`)
             className="w-full px-3 py-2 border rounded-lg"
           >
             <option value="">Select</option>
+            <option value="Vendor Payment">Vendor Payment</option>
             <option value="Staff Salary">Staff Salary</option>
             <option value="Rent">Rent</option>
             <option value="Food">Food</option>
@@ -742,19 +790,50 @@ let res = await fetch(`${API_BASE_URL}/vendor/due/${e.target.value}`)
           />
         </div>
 
-        {/* Vendor Name */}
-        <div>
+{/* vendor name */}
+        
+         {form.category==="Vendor Payment"&&
+         <div className='z-99 w-full'>
           <label className="block text-sm font-medium">Vendor Name</label>
-          <input
-            type="text"
-            name="vendor_name"
-            value={form.vendor_name}
-            onChange={(e) => setForm(prev => ({ ...prev, vendor_name: e.target.value.charAt(0).toUpperCase()+e.target.value.slice(1) }))}
-            className="w-full px-3 py-2 border rounded-lg"
-          />
+          <select
+            name="vendor_id"
+            value={form.vendor_id||''}
+            onChange={getVendorsItems}
+            className="w-full px-3 py-2 z-999 border rounded-lg"
+          >
+              <option value="">Select Vendor</option>
+      {vendorSelect && vendorSelect.length > 0 && (
+        
+        vendorSelect.map((vendor) => (
+          <option key={vendor.vendor_id || vendor.id} value={vendor.vendor_id || vendor.id}>
+            
+            {vendor.vendor_name}
+          </option>
+        ))
+      ) }
+   
+          </select>
         </div>
+        }
 
-        {/* Credit */}
+        { form.category==='Vendor Payment'&&
+         <div className='z-99 '>
+          <label className="block text-sm font-medium">Vendor Items</label>
+          <select
+            name="vendor_item"
+            value={form.vendor_item||''}
+            onChange={handleChange}
+            className="w-full px-3 py-2 z-999 border rounded-lg"
+          >
+              <option value="">Select Item</option>
+        {vendorItems.map((item)=>{
+          
+           return <option value={item.vendor_items_id}>{item.product_name}</option>
+          
+        })}
+        </select>
+        </div>
+         }
         
 
         {/* Debit */}
@@ -886,6 +965,7 @@ let res = await fetch(`${API_BASE_URL}/vendor/due/${e.target.value}`)
     </div>
   </div>
 )}
+
 
       
     </div>

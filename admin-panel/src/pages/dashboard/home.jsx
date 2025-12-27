@@ -31,6 +31,9 @@ import { CheckCircleIcon, EyeIcon } from "@heroicons/react/24/solid";
 import { StatisticsChart } from "@/widgets/charts";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useNavigate } from "react-router-dom";
+
+
 
 // Custom CardFooter component (to avoid conflict)
 const CustomCardFooter = ({ children, className }) => {
@@ -74,7 +77,7 @@ export function Home() {
   const [dailySalesData, setDailySalesData] = useState([]);
   const [billCountData, setBillCountData] = useState([]);
  
-
+const navigate = useNavigate();
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
   useEffect(() => {
     fetchDashboardData();
@@ -153,14 +156,13 @@ export function Home() {
       
       if (response.ok) {
         const result = await response.json();
-        // Prepare data for Website View chart (bill count per day)
+        
         if (result.data) {
-          // We'll create sample data since bill count per day might not be directly available
-          // In real implementation, you'd have an API endpoint for daily bill counts
+          
           const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
           const sampleBillCounts = days.map(day => ({
             day,
-            count: Math.floor(Math.random() * 20) + 5 // Sample data
+            count: Math.floor(Math.random() * 20) + 5 
           }));
           setBillCountData(sampleBillCounts);
         }
@@ -553,9 +555,117 @@ export function Home() {
           />
         ))}
       </div>
+     <div className="mb-6">
+  <Typography variant="h5" color="blue-gray" className="mb-2">
+    Quick Actions
+  </Typography>
+  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-4">
+    {/* Create New Bill */}
+    <Tooltip content="Create New Bill">
+      <Card 
+        className="cursor-pointer hover:shadow-lg transition-shadow border border-blue-gray-50"
+        onClick={() => navigate('/dashboard/billing-management/create')}
+      >
+        <CardBody className="p-4 flex flex-col items-center justify-center">
+          <div className="bg-gradient-to-tr from-blue-500 to-blue-300 rounded-full p-3 mb-2">
+            <ShoppingBagIcon className="h-6 w-6 text-white" />
+          </div>
+          <Typography variant="small" className="text-center font-medium">
+            New Bill
+          </Typography>
+        </CardBody>
+      </Card>
+    </Tooltip>
+
+    {/* Add New Customer */}
+    <Tooltip content="Add New Vendor">
+      <Card 
+        className="cursor-pointer hover:shadow-lg transition-shadow border border-blue-gray-50"
+        onClick={() => navigate('/dashboard/vendor')}
+      >
+        <CardBody className="p-4 flex flex-col items-center justify-center">
+          <div className="bg-gradient-to-tr from-green-500 to-green-300 rounded-full p-3 mb-2">
+            <UserGroupIcon className="h-6 w-6 text-white" />
+          </div>
+          <Typography variant="small" className="text-center font-medium">
+            Add Vendor
+          </Typography>
+        </CardBody>
+      </Card>
+    </Tooltip>
+
+    {/* Add New Product */}
+    <Tooltip content="Add New Product">
+      <Card 
+        className="cursor-pointer hover:shadow-lg transition-shadow border border-blue-gray-50"
+        onClick={() => navigate('/dashboard/product-management')}
+      >
+        <CardBody className="p-4 flex flex-col items-center justify-center">
+          <div className="bg-gradient-to-tr from-purple-500 to-purple-300 rounded-full p-3 mb-2">
+            <CubeIcon className="h-6 w-6 text-white" />
+          </div>
+          <Typography variant="small" className="text-center font-medium">
+            Add Product
+          </Typography>
+        </CardBody>
+      </Card>
+    </Tooltip>
+
+    {/* View Collection */}
+    <Tooltip content="View Collection">
+      <Card 
+        className="cursor-pointer hover:shadow-lg transition-shadow border border-blue-gray-50"
+        onClick={() => navigate('/dashboard/business-report')}
+      >
+        <CardBody className="p-4 flex flex-col items-center justify-center">
+          <div className="bg-gradient-to-tr from-orange-500 to-orange-300 rounded-full p-3 mb-2">
+            <BanknotesIcon className="h-6 w-6 text-white" />
+          </div>
+          <Typography variant="small" className="text-center font-medium">
+            Collection
+          </Typography>
+        </CardBody>
+      </Card>
+    </Tooltip>
+
+    {/* View Reports */}
+    <Tooltip content="Stock Reports">
+      <Card 
+        className="cursor-pointer hover:shadow-lg transition-shadow border border-blue-gray-50"
+        onClick={() => navigate('/dashboard/stocks')}
+      >
+        <CardBody className="p-4 flex flex-col items-center justify-center">
+          <div className="bg-gradient-to-tr from-red-500 to-red-300 rounded-full p-3 mb-2">
+            <ChartBarIcon className="h-6 w-6 text-white" />
+          </div>
+          <Typography variant="small" className="text-center font-medium">
+           Stock Reports
+          </Typography>
+        </CardBody>
+      </Card>
+    </Tooltip>
+
+    {/* Quick Sell */}
+    <Tooltip content=" Create Quotation">
+      <Card 
+        className="cursor-pointer hover:shadow-lg transition-shadow border border-blue-gray-50"
+        onClick={() => navigate('/dashboard/quotation')}
+      >
+        <CardBody className="p-4 flex flex-col items-center justify-center">
+          <div className="bg-gradient-to-tr from-pink-500 to-pink-300 rounded-full p-3 mb-2">
+            <ArrowUpIcon className="h-6 w-6 text-white" />
+          </div>
+          <Typography variant="small" className="text-center font-medium">
+            Quotation
+          </Typography>
+        </CardBody>
+      </Card>
+    </Tooltip>
+  </div>
+</div>
       
       {/* Charts Section */}
-      <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
+      {/* <div className="mb-6 grid grid-cols-1 gap-y-12 gap-x-6 md:grid-cols-2 xl:grid-cols-3">
         {statisticsChartsData.map((props) => (
           <StatisticsChart
             key={props.title}
@@ -563,7 +673,7 @@ export function Home() {
             
           />
         ))}
-      </div>
+      </div> */}
       
       {/* Bottom Section: Top Products & Recent Bills */}
       <div className="mb-4 grid grid-cols-1 gap-6 xl:grid-cols-3">
